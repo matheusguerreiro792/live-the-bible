@@ -1,2 +1,2 @@
 # live-the-bible
-Bible
+Live the Bible - App
