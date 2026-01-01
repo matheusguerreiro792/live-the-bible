@@ -1,0 +1,397 @@
+
+
+=== ./src/firebase/config.js ===
+
+import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
+
+const firebaseConfig = {
+  apiKey: import.meta.env.FIREBASE_API_KEY,
+  authDomain: import.meta.env.FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.FIREBASE_APP_ID,
+}
+
+const app = initializeApp(firebaseConfig)
+
+const db = getFirestore(app)
+const auth = getAuth(app)
+
+export { db, auth }
+
+
+=== ./src/router/index.ts ===
+
+import { createRouter, createWebHistory } from 'vue-router'
+import { auth } from '@/firebase/config'
+import { onAuthStateChanged } from 'firebase/auth'
+import HomeView from '@/views/HomeView.vue'
+import LoginView from '@/views/LoginView.vue'
+import AdminView from '@/views/AdminView.vue'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/devocionais',
+      name: 'devocionais',
+      component: () => import('../views/DevocionaisView.vue'),
+    },
+    {
+      path: '/estudos',
+      name: 'estudos',
+      component: () => import('../views/EstudosView.vue'),
+    },
+    {
+      path: '/sobre',
+      name: 'sobre',
+      component: () => import('../views/AboutView.vue'),
+    },
+  ],
+})
+
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const currentUser = auth.currentUser
+
+  if (requiresAuth && !currentUser) {
+    console.log('Rota protegida, redirecionando para login.')
+    next('/login')
+  } else if (!requiresAuth && currentUser && to.path === '/login') {
+    console.log('Usuário já logado, redirecionando para admin.')
+    next('/admin')
+  } else {
+    next()
+  }
+})
+
+export default router
+
+
+=== ./src/views/HomeView.vue ===
+
+<script setup lang="ts">
+import HomeDevotional from '@/components/HomeDevotional.vue'
+const devotional = {
+  title: 'Novas Criaturas em Cristo',
+  verse: {
+    verse: '2 Coríntios 5:17',
+    versions: {
+      arc: 'Assim que, se alguém está em Cristo, nova criatura é: as coisas velhas já passaram; eis que tudo se fez novo.',
+      nvi: 'Portanto, se alguém está em Cristo, é uma nova criação. As coisas antigas já passaram; eis que se fizeram novas!',
+      ntlh: 'Quem está unido com Cristo é uma nova pessoa; acabou-se o que era velho, e já chegou o que é novo.',
+    },
+  },
+  introduction: [
+    'Que verdade poderosa e transformadora Paulo nos apresenta em 2 Coríntios 5:17! Este versículo não é apenas uma declaração teológica, mas um convite vibrante à uma nova realidade. Ele surge no contexto da ministração de Paulo sobre a reconciliação e o ministério que Deus nos confiou. Paulo está explicando a profundidade da obra de Cristo, que não apenas nos perdoa, mas nos refaz por completo, tornando-nos embaixadores dessa mesma reconciliação. É uma mensagem de esperança e de um novo começo, que ressoa profundamente em corações que anseiam por mudança e propósito.',
+    'A importância deste versículo para nós hoje é imensa. Em um mundo que constantemente nos define por nosso passado, nossos erros, nossas falhas ou nossas conquistas terrenas, a Palavra de Deus nos oferece uma identidade radicalmente diferente. Ela nos diz que, em Cristo, não somos apenas pessoas reformadas ou melhoradas; somos, de fato, novas criaturas. Essa verdade tem o poder de libertar-nos do peso da culpa, da vergonha e das expectativas do mundo, capacitando-nos a viver uma vida plena e com propósito, alinhada com a vontade de Deus. É a base para uma vida de transformação contínua e de esperança inabalável.',
+  ],
+  analysis: [
+    {
+      text: [
+        'Vamos mergulhar nas profundezas desta declaração transformadora, buscando a sabedoria de comentaristas renomados como Matthew Henry e o Comentário Bíblico Beacon para iluminar nosso entendimento.',
+      ],
+    },
+    {
+      title: 'Explicar "se alguém está em Cristo"',
+      text: [
+        'A frase "se alguém está em Cristo" é a condição fundamental para toda a transformação que se segue. Não se trata de uma mera filiação religiosa ou de um conhecimento intelectual sobre Jesus. Matthew Henry, em seus comentários, enfatiza que estar em Cristo significa uma união vital e espiritual com Ele pela fé. Não é apenas uma profissão externa, mas uma realidade interna, onde a vida de Cristo é infundida em nós. É ser enxertado Nele, como um ramo na videira, recebendo dEle a seiva da vida. Henry sugere que essa união implica uma participação em Sua morte e ressurreição, morrendo para o pecado e ressuscitando para uma nova vida de justiça.',
+        'O Comentário Bíblico Beacon complementa essa visão, destacando que "estar em Cristo" denota uma nova esfera de existência. É como mudar de um país para outro, mas em um sentido espiritual. Saímos do domínio do pecado e da morte e entramos no domínio da graça e da vida em Cristo. Beacon ressalta que essa união é tão profunda que nossa identidade é redefinida por Ele. Não somos mais definidos por quem éramos antes, mas por quem somos Nele. É uma relação pessoal e transformadora que molda cada aspecto do nosso ser.',
+      ],
+    },
+    {
+      title: 'O significado de "novas criaturas"',
+      text: [
+        'A expressão "nova criatura" (ou "nova criação" na NVI) é o cerne da mensagem. Não é uma reforma, mas uma regeneração. Matthew Henry descreve essa "nova criatura" como uma obra divina, uma criação radicalmente nova no coração e na vida. Não é apenas uma mudança de comportamento, mas uma mudança de natureza, de princípios, de afeições e de propósitos. É como se Deus nos recriasse, dando-nos um novo espírito, um novo coração e uma nova mente. Henry argumenta que essa nova criação é tão profunda quanto a criação original do mundo, sendo uma obra do poder onipotente de Deus. Não podemos nos fazer novas criaturas; é Deus quem opera essa transformação em nós.',
+        'O Comentário Bíblico Beacon reforça que a "nova criatura" é o resultado de um novo nascimento espiritual. É uma obra criativa de Deus, que não apenas remenda o velho, mas faz algo inteiramente novo. Beacon explica que essa nova criação envolve uma mudança de senhorio (de Satanás para Cristo), uma mudança de natureza (de pecaminosa para justa) e uma mudança de destino (da condenação para a vida eterna). É um ser espiritual renovado, com novas percepções, novos desejos e uma nova capacidade de amar e obedecer a Deus. É a evidência da presença do Espírito Santo em nós, que nos capacita a viver de acordo com essa nova identidade.',
+      ],
+    },
+    {
+      title: '"As coisas velhas passaram"',
+      text: [
+        'Esta parte do versículo aponta para a ruptura decisiva com o passado. Matthew Henry interpreta "as coisas velhas" como os antigos pecados, os velhos hábitos, as antigas paixões e os velhos modos de vida que caracterizavam nossa existência antes de Cristo. Ele também inclui as antigas concepções legalistas da religião, a autossuficiência e a inimizade para com Deus. Todas essas coisas são abolidas, não apenas perdoadas, mas deixadas para trás como algo que não nos pertence mais. Henry enfatiza que essa passagem é um ato de Deus, que nos liberta do domínio do pecado e da lei.',
+        'O Comentário Bíblico Beacon detalha que "as coisas velhas" incluem a velha vida dominada pelo pecado, o velho "eu" centrado em si mesmo, os velhos desejos carnais e as velhas perspectivas mundanas. A passagem dessas coisas é decisiva e completa. Não é um processo gradual de "desaparecimento", mas uma declaração de que, em Cristo, o poder do passado sobre nós foi quebrado. Embora a luta contra a carne continue, a autoridade do pecado sobre o crente foi removida. Beacon sugere que essa passagem também se refere à velha aliança e suas exigências, que foram cumpridas e superadas pela nova aliança em Cristo.',
+      ],
+    },
+    {
+      title: '"Eis que tudo se fez novo"',
+      text: [
+        'Esta é a culminação da transformação. Matthew Henry descreve que "tudo se fez novo" significa que o crente recebe um novo coração, um novo espírito, novos desejos, novas esperanças e uma nova conversa (maneira de viver). A mente é renovada, a vontade é direcionada para Deus, as afeições são santificadas e os propósitos são alinhados com os de Cristo. É uma renovação completa da vida interior e exterior. Henry destaca que essa novidade não é apenas uma promessa futura, mas uma realidade presente que começa no momento da conversão e se aprofunda ao longo da vida cristã.',
+        'O Comentário Bíblico Beacon enfatiza que essa renovação é abrangente, afetando cada aspecto da vida do crente: pensamentos, desejos, motivos, ações, relacionamentos e propósito. É uma transformação que se manifesta em uma nova maneira de ver o mundo, de interagir com as pessoas e de se relacionar com Deus. Beacon afirma que essa novidade é uma realidade presente, um "eis que" que convida à observação e à celebração. Não é apenas uma esperança para o céu, mas uma experiência diária do poder transformador de Deus. A vida em Cristo é uma vida de constante renovação, onde o Espírito Santo continua a moldar-nos à imagem de Jesus.',
+      ],
+    },
+  ],
+  practicalApplication: [
+    {
+      text: [
+        'A verdade de 2 Coríntios 5:17 não é para ser apenas admirada, mas vivida. Como podemos, então, manifestar essa realidade de "novas criaturas" em nosso dia a dia?',
+      ],
+    },
+    {
+      title: 'Abraçar a Nova Identidade e Rejeitar o Passado',
+      text: [
+        'O primeiro passo é crer verdadeiramente que você é uma nova criatura. Isso significa parar de se definir pelos seus erros passados, suas falhas ou as etiquetas que o mundo lhe impôs. Quando a tentação de se sentir culpado ou indigno surgir, lembre-se: "as coisas velhas já passaram". Em Cristo, você é perdoado, amado e tem um novo começo. Viva como alguém que foi recriado, com a dignidade e o propósito que Deus lhe deu. Por exemplo, se você costumava ser dominado pela raiva, agora, como nova criatura, você tem o poder de escolher a paciência e o amor, buscando a ajuda do Espírito Santo para reagir de forma diferente.',
+      ],
+    },
+    {
+      title: 'Cultivar Novos Desejos e Hábitos',
+      text: [
+        'Se "tudo se fez novo", isso implica que nossos desejos e hábitos também devem ser renovados. Onde antes havia um desejo por coisas mundanas ou pecaminosas, agora deve haver um anseio por justiça, santidade e pela Palavra de Deus. Isso se manifesta na prática diária: dedicando tempo à oração e à leitura bíblica, buscando a comunhão com outros crentes, e escolhendo atividades que glorifiquem a Deus. Por exemplo, em vez de preencher seu tempo livre com entretenimento vazio, você pode escolher ouvir um louvor, ler um livro cristão ou servir a alguém necessitado.',
+      ],
+    },
+    {
+      title: 'Viver a Reconciliação e o Amor',
+      text: [
+        'Como novas criaturas, somos chamados a refletir o ministério de reconciliação de Cristo. Isso significa buscar a paz, perdoar aqueles que nos ofenderam e estender a graça aos outros, assim como a recebemos. Nossos relacionamentos devem ser marcados pelo amor, pela paciência e pela bondade. Em um conflito, a velha criatura reagiria com orgulho e retaliação; a nova criatura busca a humildade, o perdão e a restauração. É uma oportunidade de ser luz e sal, mostrando ao mundo a transformação que Cristo opera.',
+      ],
+    },
+    {
+      title: 'Permitir a Continua Transformação do Espírito Santo',
+      text: [
+        'A "nova criação" não é um evento único que nos torna perfeitos instantaneamente, mas o início de um processo contínuo de santificação. O Espírito Santo habita em nós para nos guiar, convencer e capacitar a viver essa nova vida. Isso envolve estar aberto à correção de Deus, buscar o crescimento espiritual e render-se diariamente à Sua vontade. A cada dia, somos convidados a morrer para o "velho eu" e a viver mais plenamente para Cristo, permitindo que Ele nos molde à Sua imagem.',
+      ],
+    },
+  ],
+  reflection: [
+    'Para que esta verdade se torne viva em seu coração, convido você a refletir sinceramente sobre as seguintes perguntas:',
+    'Você realmente se vê como uma nova criatura em Cristo, ou ainda se prende às definições e culpas do seu passado?',
+    'Quais "coisas velhas" (hábitos, pensamentos, atitudes) ainda persistem em sua vida e precisam ser entregues a Deus para que Ele as faça passar de vez?',
+    'De que forma o "tudo se fez novo" se manifesta em suas atitudes, pensamentos, palavras e relacionamentos hoje? Você consegue identificar as evidências dessa nova vida?',
+    'Como você pode, a partir de hoje, viver mais plenamente essa nova identidade e propósito que Deus lhe deu, permitindo que o Espírito Santo o guie em cada passo?',
+  ],
+  prayer: [
+    'Amado Pai, somos gratos pela maravilhosa verdade de 2 Coríntios 5:17. Agradecemos porque, em Cristo, não somos apenas perdoados, mas recriados. Obrigado por fazer de nós novas criaturas, por fazer com que as coisas velhas passassem e por fazer tudo novo em nossas vidas.',
+    'Senhor, reconhecemos que, por vezes, ainda nos apegamos ao que passou, ou lutamos para viver plenamente a nova identidade que nos deste. Pedimos que o Teu Espírito Santo nos capacite a abraçar essa verdade com todo o nosso ser. Ajuda-nos a rejeitar as mentiras do inimigo e as acusações do nosso passado, e a caminhar na liberdade e no propósito que encontramos em Ti.',
+    'Que a nossa vida seja um testemunho vivo de que, em Cristo, a transformação é real e completa. Que nossos pensamentos, palavras e ações reflitam a novidade de vida que recebemos. Capacita-nos a amar como Tu amas, a perdoar como Tu perdoas e a viver para a Tua glória. Que a cada dia, mais do "velho eu" morra e mais de Cristo viva em nós.',
+    'Em nome de Jesus, nosso Salvador e Redentor, oramos. Amém.',
+  ],
+}
+</script>
+
+<template>
+  <main className="flex flex-col bg-neutral-100 flex-1 items-center py-14 px-21">
+    <HomeDevotional :devotional="devotional" />
+  </main>
+</template>
+
+
+=== ./src/components/HomeDevotional.vue ===
+
+<script setup lang="ts">
+const props = defineProps<{
+  devotional: {
+    title: string
+    verse: {
+      verse: string
+      versions: {
+        arc: string
+        nvi: string
+        ntlh: string
+      }
+    }
+    introduction: string[]
+    analysis: {
+      title?: string
+      text: string[]
+    }[]
+    practicalApplication: {
+      title?: string
+      text: string[]
+    }
+    reflection: string[]
+    prayer: string[]
+  }
+}>()
+</script>
+
+<template>
+  <div class="bg-neutral-50 p-4 gap-4 rounded-lg shadow-md flex flex-col">
+    <h2 class="font-semibold text-2xl py-0 text-fuchsia-950 px-1 rounded-md w-fit">
+      {{ devotional.title }}
+    </h2>
+    <strong
+      class="bg-fuchsia-50 border border-fuchsia-900 w-fit text-fuchsia-950 rounded-md px-2 py-0.5 flex items-center"
+      >{{ devotional.verse.verse }}</strong
+    >
+    <ul class="flex flex-col gap-2">
+      <li class="flex items-center gap-4">
+        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
+        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">ARC</strong>
+        <span>{{ devotional.verse.versions.arc }}</span>
+      </li>
+      <li class="flex items-center gap-4">
+        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
+        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">NVI</strong>
+        <span>{{ devotional.verse.versions.nvi }}</span>
+      </li>
+      <li class="flex items-center gap-4">
+        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
+        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">NTLH</strong>
+        <span>{{ devotional.verse.versions.ntlh }}</span>
+      </li>
+    </ul>
+    <hr class="text-fuchsia-900 -mb-0.5" />
+    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Introdução</h3>
+    <p v-for="(p, i) in devotional.introduction" :key="i" class="text-justify">{{ p }}</p>
+    <hr class="text-fuchsia-900 -mb-0.5" />
+    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Análise Profunda</h3>
+    <p v-for="(p, i) in devotional.analysis[0].text" :key="i" class="text-justify">{{ p }}</p>
+    <div v-for="(o, i) in devotional.analysis.slice(1)" :key="i" class="flex flex-col gap-2">
+      <h4 class="text-fuchsia-900 font-semibold text-base">{{ o.title }}</h4>
+      <p v-for="(p, j) in o.text" :key="j" class="text-justify">{{ p }}</p>
+    </div>
+    <hr class="text-fuchsia-900 -mb-0.5" />
+    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Aplicação Prática</h3>
+    <p v-for="(p, i) in devotional.practicalApplication[0].text" :key="i" class="text-justify">
+      {{ p }}
+    </p>
+    <ol class="flex flex-col gap-4">
+      <li
+        v-for="(o, i) in devotional.practicalApplication.slice(1)"
+        :key="i"
+        class="text-justify list-decimal list-inside"
+      >
+        <span v-for="(p, j) in o.text" :key="j" class="text-justify">
+          <strong class="text-fuchsia-900 font-semibold">{{ o.title }}</strong
+          >: {{ p }}
+        </span>
+      </li>
+    </ol>
+    <hr class="text-fuchsia-900 -mb-0.5" />
+    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Reflexão Pessoal</h3>
+    <p class="text-justify">{{ devotional.reflection[0] }}</p>
+    <ul class="flex flex-col gap-1">
+      <li
+        v-for="(p, i) in devotional.reflection.slice(1)"
+        :key="i"
+        class="text-justify list-disc list-inside"
+      >
+        {{ p }}
+      </li>
+    </ul>
+    <hr class="text-fuchsia-900 -mb-0.5" />
+    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Oração</h3>
+    <p v-for="(p, i) in devotional.prayer" :key="i" class="text-justify">{{ p }}</p>
+  </div>
+</template>
+
+
+=== ./src/views/LoginView.vue ===
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { auth } from '@/firebase/config'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+
+const email = ref('')
+const password = ref('')
+const errorMessage = ref<string | null>(null)
+const router = useRouter()
+
+const handleLogin = async () => {
+  errorMessage.value = null
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value)
+    router.push('/admin')
+  } catch (error: any) {
+    console.error('Erro de login:', error.code, error.message)
+    switch (error.code) {
+      case 'auth/user-not-found':
+        errorMessage.value = 'Usuário não encontrado. Verifique seu e-mail.'
+        break
+      case 'auth/wrong-password':
+        errorMessage.value = 'Senha incorreta. Tente novamente.'
+        break
+      case 'auth/invalid-email':
+        errorMessage.value = 'E-mail inválido.'
+        break
+      case 'auth/too-many-requests':
+        errorMessage.value = 'Muitas tentativas de login. Tente novamente mais tarde.'
+        break
+      default:
+        errorMessage.value = 'Erro ao fazer login. Verifique suas credenciais.'
+        break
+    }
+  }
+}
+</script>
+
+<template>
+  <div
+    class="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4 sm:px-6 lg:px-8"
+  >
+    <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-lg shadow-md">
+      <div>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-fuchsia-950">
+          Acesso Administrativo
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          Entre com suas credenciais para acessar o painel.
+        </p>
+      </div>
+      <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
+        <div class="rounded-md shadow-sm -space-y-px">
+          <div>
+            <label for="email-address" class="sr-only">E-mail</label>
+            <input
+              id="email-address"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-fuchsia-500 focus:border-fuchsia-500 focus:z-10 sm:text-sm"
+              placeholder="Endereço de E-mail"
+              v-model="email"
+            />
+          </div>
+          <div>
+            <label for="password" class="sr-only">Senha</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-fuchsia-500 focus:border-fuchsia-500 focus:z-10 sm:text-sm"
+              placeholder="Senha"
+              v-model="password"
+            />
+          </div>
+        </div>
+
+        <div v-if="errorMessage" class="text-red-600 text-sm text-center">
+          {{ errorMessage }}
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-fuchsia-800 hover:bg-fuchsia-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-500"
+          >
+            Entrar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
