@@ -10,6 +10,7 @@ const props = defineProps<{
         ntlh: string
       }
     }
+    theme: string
     introduction: string[]
     analysis: {
       title?: string
@@ -26,7 +27,15 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="bg-neutral-50 p-4 gap-4 rounded-lg shadow-md flex flex-col">
+  <div
+    class="relative bg-neutral-50 py-4 px-5 gap-4 rounded-lg shadow-md overflow-hidden flex flex-col"
+  >
+    <div class="absolute top-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-bl-md">
+      <span
+        class="shadow-lg text-xs font-medium bg-gradient-to-tr from-zinc-300 via-zinc-100 to-zinc-300 bg-clip-text text-transparent drop-shadow-sm"
+        >{{ devotional.theme }}</span
+      >
+    </div>
     <h2 class="font-semibold text-2xl py-0 text-fuchsia-950 px-1 rounded-md w-fit">
       {{ devotional.title }}
     </h2>
@@ -37,17 +46,17 @@ const props = defineProps<{
     <ul class="flex flex-col gap-2">
       <li class="flex items-center gap-4">
         <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">ARC</strong>
+        <strong class="font-semibold text-xs w-8 text-fuchsia-900">ARC</strong>
         <span>{{ devotional.verse.versions.arc }}</span>
       </li>
       <li class="flex items-center gap-4">
         <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">NVI</strong>
+        <strong class="font-semibold text-xs w-8 text-fuchsia-900">NVI</strong>
         <span>{{ devotional.verse.versions.nvi }}</span>
       </li>
       <li class="flex items-center gap-4">
         <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8.25 text-fuchsia-900">NTLH</strong>
+        <strong class="font-semibold text-xs w-8 text-fuchsia-900">NTLH</strong>
         <span>{{ devotional.verse.versions.ntlh }}</span>
       </li>
     </ul>

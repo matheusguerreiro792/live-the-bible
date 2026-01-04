@@ -1,103 +1,35 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import HomeDevotional from '@/components/HomeDevotional.vue'
-const devotional = {
-  title: 'Novas Criaturas em Cristo',
-  verse: {
-    verse: '2 Coríntios 5:17',
-    versions: {
-      arc: 'Assim que, se alguém está em Cristo, nova criatura é: as coisas velhas já passaram; eis que tudo se fez novo.',
-      nvi: 'Portanto, se alguém está em Cristo, é uma nova criação. As coisas antigas já passaram; eis que se fizeram novas!',
-      ntlh: 'Quem está unido com Cristo é uma nova pessoa; acabou-se o que era velho, e já chegou o que é novo.',
-    },
-  },
-  introduction: [
-    'Que verdade poderosa e transformadora Paulo nos apresenta em 2 Coríntios 5:17! Este versículo não é apenas uma declaração teológica, mas um convite vibrante à uma nova realidade. Ele surge no contexto da ministração de Paulo sobre a reconciliação e o ministério que Deus nos confiou. Paulo está explicando a profundidade da obra de Cristo, que não apenas nos perdoa, mas nos refaz por completo, tornando-nos embaixadores dessa mesma reconciliação. É uma mensagem de esperança e de um novo começo, que ressoa profundamente em corações que anseiam por mudança e propósito.',
-    'A importância deste versículo para nós hoje é imensa. Em um mundo que constantemente nos define por nosso passado, nossos erros, nossas falhas ou nossas conquistas terrenas, a Palavra de Deus nos oferece uma identidade radicalmente diferente. Ela nos diz que, em Cristo, não somos apenas pessoas reformadas ou melhoradas; somos, de fato, novas criaturas. Essa verdade tem o poder de libertar-nos do peso da culpa, da vergonha e das expectativas do mundo, capacitando-nos a viver uma vida plena e com propósito, alinhada com a vontade de Deus. É a base para uma vida de transformação contínua e de esperança inabalável.',
-  ],
-  analysis: [
-    {
-      text: [
-        'Vamos mergulhar nas profundezas desta declaração transformadora, buscando a sabedoria de comentaristas renomados como Matthew Henry e o Comentário Bíblico Beacon para iluminar nosso entendimento.',
-      ],
-    },
-    {
-      title: 'Explicar "se alguém está em Cristo"',
-      text: [
-        'A frase "se alguém está em Cristo" é a condição fundamental para toda a transformação que se segue. Não se trata de uma mera filiação religiosa ou de um conhecimento intelectual sobre Jesus. Matthew Henry, em seus comentários, enfatiza que estar em Cristo significa uma união vital e espiritual com Ele pela fé. Não é apenas uma profissão externa, mas uma realidade interna, onde a vida de Cristo é infundida em nós. É ser enxertado Nele, como um ramo na videira, recebendo dEle a seiva da vida. Henry sugere que essa união implica uma participação em Sua morte e ressurreição, morrendo para o pecado e ressuscitando para uma nova vida de justiça.',
-        'O Comentário Bíblico Beacon complementa essa visão, destacando que "estar em Cristo" denota uma nova esfera de existência. É como mudar de um país para outro, mas em um sentido espiritual. Saímos do domínio do pecado e da morte e entramos no domínio da graça e da vida em Cristo. Beacon ressalta que essa união é tão profunda que nossa identidade é redefinida por Ele. Não somos mais definidos por quem éramos antes, mas por quem somos Nele. É uma relação pessoal e transformadora que molda cada aspecto do nosso ser.',
-      ],
-    },
-    {
-      title: 'O significado de "novas criaturas"',
-      text: [
-        'A expressão "nova criatura" (ou "nova criação" na NVI) é o cerne da mensagem. Não é uma reforma, mas uma regeneração. Matthew Henry descreve essa "nova criatura" como uma obra divina, uma criação radicalmente nova no coração e na vida. Não é apenas uma mudança de comportamento, mas uma mudança de natureza, de princípios, de afeições e de propósitos. É como se Deus nos recriasse, dando-nos um novo espírito, um novo coração e uma nova mente. Henry argumenta que essa nova criação é tão profunda quanto a criação original do mundo, sendo uma obra do poder onipotente de Deus. Não podemos nos fazer novas criaturas; é Deus quem opera essa transformação em nós.',
-        'O Comentário Bíblico Beacon reforça que a "nova criatura" é o resultado de um novo nascimento espiritual. É uma obra criativa de Deus, que não apenas remenda o velho, mas faz algo inteiramente novo. Beacon explica que essa nova criação envolve uma mudança de senhorio (de Satanás para Cristo), uma mudança de natureza (de pecaminosa para justa) e uma mudança de destino (da condenação para a vida eterna). É um ser espiritual renovado, com novas percepções, novos desejos e uma nova capacidade de amar e obedecer a Deus. É a evidência da presença do Espírito Santo em nós, que nos capacita a viver de acordo com essa nova identidade.',
-      ],
-    },
-    {
-      title: '"As coisas velhas passaram"',
-      text: [
-        'Esta parte do versículo aponta para a ruptura decisiva com o passado. Matthew Henry interpreta "as coisas velhas" como os antigos pecados, os velhos hábitos, as antigas paixões e os velhos modos de vida que caracterizavam nossa existência antes de Cristo. Ele também inclui as antigas concepções legalistas da religião, a autossuficiência e a inimizade para com Deus. Todas essas coisas são abolidas, não apenas perdoadas, mas deixadas para trás como algo que não nos pertence mais. Henry enfatiza que essa passagem é um ato de Deus, que nos liberta do domínio do pecado e da lei.',
-        'O Comentário Bíblico Beacon detalha que "as coisas velhas" incluem a velha vida dominada pelo pecado, o velho "eu" centrado em si mesmo, os velhos desejos carnais e as velhas perspectivas mundanas. A passagem dessas coisas é decisiva e completa. Não é um processo gradual de "desaparecimento", mas uma declaração de que, em Cristo, o poder do passado sobre nós foi quebrado. Embora a luta contra a carne continue, a autoridade do pecado sobre o crente foi removida. Beacon sugere que essa passagem também se refere à velha aliança e suas exigências, que foram cumpridas e superadas pela nova aliança em Cristo.',
-      ],
-    },
-    {
-      title: '"Eis que tudo se fez novo"',
-      text: [
-        'Esta é a culminação da transformação. Matthew Henry descreve que "tudo se fez novo" significa que o crente recebe um novo coração, um novo espírito, novos desejos, novas esperanças e uma nova conversa (maneira de viver). A mente é renovada, a vontade é direcionada para Deus, as afeições são santificadas e os propósitos são alinhados com os de Cristo. É uma renovação completa da vida interior e exterior. Henry destaca que essa novidade não é apenas uma promessa futura, mas uma realidade presente que começa no momento da conversão e se aprofunda ao longo da vida cristã.',
-        'O Comentário Bíblico Beacon enfatiza que essa renovação é abrangente, afetando cada aspecto da vida do crente: pensamentos, desejos, motivos, ações, relacionamentos e propósito. É uma transformação que se manifesta em uma nova maneira de ver o mundo, de interagir com as pessoas e de se relacionar com Deus. Beacon afirma que essa novidade é uma realidade presente, um "eis que" que convida à observação e à celebração. Não é apenas uma esperança para o céu, mas uma experiência diária do poder transformador de Deus. A vida em Cristo é uma vida de constante renovação, onde o Espírito Santo continua a moldar-nos à imagem de Jesus.',
-      ],
-    },
-  ],
-  practicalApplication: [
-    {
-      text: [
-        'A verdade de 2 Coríntios 5:17 não é para ser apenas admirada, mas vivida. Como podemos, então, manifestar essa realidade de "novas criaturas" em nosso dia a dia?',
-      ],
-    },
-    {
-      title: 'Abraçar a Nova Identidade e Rejeitar o Passado',
-      text: [
-        'O primeiro passo é crer verdadeiramente que você é uma nova criatura. Isso significa parar de se definir pelos seus erros passados, suas falhas ou as etiquetas que o mundo lhe impôs. Quando a tentação de se sentir culpado ou indigno surgir, lembre-se: "as coisas velhas já passaram". Em Cristo, você é perdoado, amado e tem um novo começo. Viva como alguém que foi recriado, com a dignidade e o propósito que Deus lhe deu. Por exemplo, se você costumava ser dominado pela raiva, agora, como nova criatura, você tem o poder de escolher a paciência e o amor, buscando a ajuda do Espírito Santo para reagir de forma diferente.',
-      ],
-    },
-    {
-      title: 'Cultivar Novos Desejos e Hábitos',
-      text: [
-        'Se "tudo se fez novo", isso implica que nossos desejos e hábitos também devem ser renovados. Onde antes havia um desejo por coisas mundanas ou pecaminosas, agora deve haver um anseio por justiça, santidade e pela Palavra de Deus. Isso se manifesta na prática diária: dedicando tempo à oração e à leitura bíblica, buscando a comunhão com outros crentes, e escolhendo atividades que glorifiquem a Deus. Por exemplo, em vez de preencher seu tempo livre com entretenimento vazio, você pode escolher ouvir um louvor, ler um livro cristão ou servir a alguém necessitado.',
-      ],
-    },
-    {
-      title: 'Viver a Reconciliação e o Amor',
-      text: [
-        'Como novas criaturas, somos chamados a refletir o ministério de reconciliação de Cristo. Isso significa buscar a paz, perdoar aqueles que nos ofenderam e estender a graça aos outros, assim como a recebemos. Nossos relacionamentos devem ser marcados pelo amor, pela paciência e pela bondade. Em um conflito, a velha criatura reagiria com orgulho e retaliação; a nova criatura busca a humildade, o perdão e a restauração. É uma oportunidade de ser luz e sal, mostrando ao mundo a transformação que Cristo opera.',
-      ],
-    },
-    {
-      title: 'Permitir a Continua Transformação do Espírito Santo',
-      text: [
-        'A "nova criação" não é um evento único que nos torna perfeitos instantaneamente, mas o início de um processo contínuo de santificação. O Espírito Santo habita em nós para nos guiar, convencer e capacitar a viver essa nova vida. Isso envolve estar aberto à correção de Deus, buscar o crescimento espiritual e render-se diariamente à Sua vontade. A cada dia, somos convidados a morrer para o "velho eu" e a viver mais plenamente para Cristo, permitindo que Ele nos molde à Sua imagem.',
-      ],
-    },
-  ],
-  reflection: [
-    'Para que esta verdade se torne viva em seu coração, convido você a refletir sinceramente sobre as seguintes perguntas:',
-    'Você realmente se vê como uma nova criatura em Cristo, ou ainda se prende às definições e culpas do seu passado?',
-    'Quais "coisas velhas" (hábitos, pensamentos, atitudes) ainda persistem em sua vida e precisam ser entregues a Deus para que Ele as faça passar de vez?',
-    'De que forma o "tudo se fez novo" se manifesta em suas atitudes, pensamentos, palavras e relacionamentos hoje? Você consegue identificar as evidências dessa nova vida?',
-    'Como você pode, a partir de hoje, viver mais plenamente essa nova identidade e propósito que Deus lhe deu, permitindo que o Espírito Santo o guie em cada passo?',
-  ],
-  prayer: [
-    'Amado Pai, somos gratos pela maravilhosa verdade de 2 Coríntios 5:17. Agradecemos porque, em Cristo, não somos apenas perdoados, mas recriados. Obrigado por fazer de nós novas criaturas, por fazer com que as coisas velhas passassem e por fazer tudo novo em nossas vidas.',
-    'Senhor, reconhecemos que, por vezes, ainda nos apegamos ao que passou, ou lutamos para viver plenamente a nova identidade que nos deste. Pedimos que o Teu Espírito Santo nos capacite a abraçar essa verdade com todo o nosso ser. Ajuda-nos a rejeitar as mentiras do inimigo e as acusações do nosso passado, e a caminhar na liberdade e no propósito que encontramos em Ti.',
-    'Que a nossa vida seja um testemunho vivo de que, em Cristo, a transformação é real e completa. Que nossos pensamentos, palavras e ações reflitam a novidade de vida que recebemos. Capacita-nos a amar como Tu amas, a perdoar como Tu perdoas e a viver para a Tua glória. Que a cada dia, mais do "velho eu" morra e mais de Cristo viva em nós.',
-    'Em nome de Jesus, nosso Salvador e Redentor, oramos. Amém.',
-  ],
-}
+import { useDevotionalsStore } from '@/stores/devotionals'
+
+const devotionalStore = useDevotionalsStore()
+
+onMounted(() => {
+  devotionalStore.fetchLatestDevotional()
+})
 </script>
 
 <template>
-  <main className="flex flex-col bg-neutral-100 flex-1 items-center py-14 px-21">
-    <HomeDevotional :devotional="devotional" />
+  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-4 py-14 px-21">
+    <h2
+      class="text-3xl font-medium p-2 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
+    >
+      Devocional
+    </h2>
+    <div v-if="devotionalStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
+      Carregando devocional...
+    </div>
+    <div
+      v-else-if="devotionalStore.error"
+      class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
+    >
+      {{ devotionalStore.error }}
+    </div>
+    <HomeDevotional
+      v-else-if="devotionalStore.latestDevotional"
+      :devotional="devotionalStore.latestDevotional"
+    />
+    <div v-else class="text-gray-600 text-lg">Nenhum devocional disponível no momento.</div>
   </main>
 </template>
