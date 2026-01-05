@@ -1,5 +1,5 @@
 <script setup lang="ts"></script>
 
 <template>
-  <main>estudos</main>
+  <main class="flex flex-col flex-1 px-21 py-7">Em desenvolvimento...</main>
 </template>

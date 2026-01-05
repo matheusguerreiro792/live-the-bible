@@ -79,12 +79,15 @@ const props = defineProps<{
       <li
         v-for="(o, i) in devotional.practicalApplication.slice(1)"
         :key="i"
-        class="text-justify list-decimal list-inside"
+        class="text-justify list-decimal list-inside flex flex-col gap-2"
       >
-        <span v-for="(p, j) in o.text" :key="j" class="text-justify">
-          <strong class="text-fuchsia-900 font-semibold">{{ o.title }}</strong
-          >: {{ p }}
-        </span>
+        <strong class="text-fuchsia-900 font-semibold">
+          <span class="text-neutral-950 font-normal text-sm">{{ i + 1 }}.</span>
+          {{ o.title }}</strong
+        >
+        <p v-for="(p, j) in o.text" :key="j" class="text-justify">
+          {{ p }}
+        </p>
       </li>
     </ol>
     <hr class="text-fuchsia-900 -mb-0.5" />

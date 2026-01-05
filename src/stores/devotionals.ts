@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { getLatestDevotional, getDevotionals } from '@/firebase/services/devotionals'
 
 interface Devotional {
@@ -31,13 +31,13 @@ interface Devotional {
 export const useDevotionalsStore = defineStore('devotionals', () => {
   const latestDevotional = ref<Devotional | null>(null)
   const allDevotionals = ref<Devotional[]>([])
+  const selectedTheme = ref<string | null>(null)
 
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
   const LATEST_DEVOTIONAL_CACHE_KEY = 'latestDevotionalCache'
   const LATEST_DEVOTIONAL_LAST_FETCH_DATE_KEY = 'latestDevotionalLastFetchDate'
-
   const ALL_DEVOTIONALS_CACHE_KEY = 'allDevotionalsCache'
   const ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY = 'allDevotionalsLastFetchDate'
 
@@ -125,6 +125,17 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     }
   }
 
+  const setSelectedTheme = (theme: string | null) => {
+    selectedTheme.value = theme
+  }
+
+  const filteredDevotionals = computed(() => {
+    if (!selectedTheme.value) {
+      return allDevotionals.value
+    }
+    return allDevotionals.value.filter((devotional) => devotional.theme === selectedTheme.value)
+  })
+
   const clearCache = () => {
     localStorage.removeItem(LATEST_DEVOTIONAL_CACHE_KEY)
     localStorage.removeItem(LATEST_DEVOTIONAL_LAST_FETCH_DATE_KEY)
@@ -133,6 +144,7 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     localStorage.removeItem(ALL_DEVOTIONALS_CACHE_KEY)
     localStorage.removeItem(ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY)
     allDevotionals.value = []
+    selectedTheme.value = null
 
     console.log('Cache de devocionais limpo.')
   }
@@ -144,6 +156,9 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     error,
     fetchLatestDevotional,
     fetchAllDevotionals,
+    selectedTheme,
+    setSelectedTheme,
+    filteredDevotionals,
     clearCache,
   }
 })
