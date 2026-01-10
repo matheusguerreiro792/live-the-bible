@@ -3,6 +3,8 @@ import { onMounted, computed, ref } from 'vue'
 import { useDevotionalsStore } from '@/stores/devotionals'
 import DevotionalsDevotional from '@/components/DevotionalsDevotional.vue'
 
+type Devotional = (typeof devotionalStore.allDevotionals)[0]
+
 const colors = [
   'bg-red-700 hover:bg-red-800 active:bg-red-600',
   'bg-orange-700 hover:bg-orange-800 active:bg-orange-600',
@@ -54,9 +56,9 @@ const devotionalThemesWithColors = computed(() => {
   return allThemes
 })
 
-const selectedDevotional = ref<any>(null)
+const selectedDevotional = ref<Devotional | null>(null)
 
-const handleDevotionalClick = (devotional: any) => {
+const handleDevotionalClick = (devotional: Devotional) => {
   selectedDevotional.value = devotional
 }
 
@@ -78,7 +80,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex flex-col flex-1 px-21 gap-4 py-8 relative">
+  <main class="flex flex-col flex-1 px-21 gap-4 py-8 relative bg-neutral-100">
     <div v-if="devotionalThemesWithColors.length > 0" class="flex gap-2 flex-wrap">
       <div v-for="item in devotionalThemesWithColors" :key="item.theme">
         <button
@@ -114,7 +116,7 @@ onMounted(() => {
       <div
         v-for="devotional in devotionalStore.filteredDevotionals"
         :key="devotional.id"
-        class="p-4 w-fit border border-fuchsia-950 rounded-lg shadow bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden"
+        class="p-4 w-fit border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden"
         @click="handleDevotionalClick(devotional)"
       >
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ devotional.title }}</h2>
@@ -123,10 +125,7 @@ onMounted(() => {
           >{{ devotional.verse.verse }}</strong
         >
         <div class="absolute bottom-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-tl-md">
-          <span
-            class="shadow-lg text-xs font-medium bg-gradient-to-tr from-zinc-300 via-zinc-100 to-zinc-300 bg-clip-text text-transparent drop-shadow-sm"
-            >{{ devotional.theme }}</span
-          >
+          <span class="text-xs font-medium text-neutral-50">{{ devotional.theme }}</span>
         </div>
       </div>
     </div>

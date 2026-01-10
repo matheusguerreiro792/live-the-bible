@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DevotionalForm from '@/components/DevotionalForm.vue'
+import StudiesForm from '@/components/StudiesForm.vue'
 
 const showDevotionalForm = ref(false)
 const showStudyForm = ref(false)
@@ -37,12 +38,14 @@ const closeStudyForm = () => {
         <h2 class="text-xl font-medium ml-3">Studies</h2>
         <button
           class="bg-green-600 py-2 px-3 rounded-lg cursor-pointer appearance-none hover:bg-green-700 active:bg-green-800"
+          @click="openStudyForm"
         >
           Create
         </button>
       </div>
     </div>
     <DevotionalForm v-if="showDevotionalForm" @close="closeDevotionalForm" />
+    <StudiesForm v-if="showStudyForm" @close="closeStudyForm" />
   </main>
 </template>
 

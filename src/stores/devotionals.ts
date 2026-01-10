@@ -14,17 +14,7 @@ interface Devotional {
     }
   }
   theme: string
-  introduction: string[]
-  analysis: {
-    title?: string
-    text: string[]
-  }[]
-  practicalApplication: {
-    title?: string
-    text: string[]
-  }[]
-  reflection: string[]
-  prayer: string[]
+  content: string
   createdAt: any
 }
 
@@ -78,9 +68,10 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
         latestDevotional.value = null
         error.value = 'Nenhum devocional encontrado. Por favor, adicione um na área administrativa.'
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Erro desconhecido'
       console.error('Erro ao buscar ou carregar devocional mais recente:', e)
-      error.value = `Erro ao carregar devocional: ${e.message || 'Verifique sua conexão e as regras do Firebase.'}`
+      error.value = `Erro ao carregar devocional: ${errorMessage || 'Verifique sua conexão e as regras do Firebase.'}`
 
       localStorage.removeItem(LATEST_DEVOTIONAL_CACHE_KEY)
       localStorage.removeItem(LATEST_DEVOTIONAL_LAST_FETCH_DATE_KEY)
@@ -115,9 +106,10 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
         allDevotionals.value = []
         error.value = 'Nenhum devocional encontrado na lista.'
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Erro desconhecido'
       console.error('Erro ao buscar ou carregar lista de devocionais:', e)
-      error.value = `Erro ao carregar lista de devocionais: ${e.message || 'Verifique sua conexão e as regras do Firebase.'}`
+      error.value = `Erro ao carregar lista de devocionais: ${errorMessage || 'Verifique sua conexão e as regras do Firebase.'}`
       localStorage.removeItem(ALL_DEVOTIONALS_CACHE_KEY)
       localStorage.removeItem(ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY)
     } finally {

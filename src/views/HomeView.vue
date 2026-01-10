@@ -30,7 +30,7 @@ onMounted(() => {
       v-else-if="devotionalStore.latestDevotional"
       :devotional="devotionalStore.latestDevotional"
     />
-    <div v-else class="text-gray-600 text-lg">Nenhum devocional disponível no momento.</div>
+    <div v-else class="text-neutral-950 text-lg">Nenhum devocional disponível no momento.</div>
     <h2
       class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
     >
