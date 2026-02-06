@@ -1,40 +1,55 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import HomeDevotional from '@/components/HomeDevotional.vue'
+import HomeStudie from '@/components/HomeStudie.vue'
 import { useDevotionalsStore } from '@/stores/devotionals'
+import { useStudiesStore } from '@/stores/studies'
 
-const devotionalStore = useDevotionalsStore()
+const devotionalsStore = useDevotionalsStore()
+const studiesStore = useStudiesStore()
 
 onMounted(() => {
-  devotionalStore.fetchLatestDevotional()
+  devotionalsStore.fetchLatestDevotional()
+  studiesStore.fetchLatestStudie()
 })
 </script>
 
 <template>
-  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-4 py-8 px-21">
+  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-8 py-8 px-21">
     <h2
       class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
     >
       Devocional
     </h2>
-    <div v-if="devotionalStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
-      Carregando devocional...
+    <div v-if="devotionalsStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
+      carregando Devocional...
     </div>
     <div
-      v-else-if="devotionalStore.error"
+      v-else-if="devotionalsStore.error"
       class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
     >
-      {{ devotionalStore.error }}
+      {{ devotionalsStore.error }}
     </div>
     <HomeDevotional
-      v-else-if="devotionalStore.latestDevotional"
-      :devotional="devotionalStore.latestDevotional"
+      v-else-if="devotionalsStore.latestDevotional"
+      :devotional="devotionalsStore.latestDevotional"
     />
-    <div v-else class="text-neutral-950 text-lg">Nenhum devocional disponível no momento.</div>
+    <div v-else class="text-neutral-950 text-lg">Nenhum Devocional disponível no momento.</div>
     <h2
-      class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
+      class="text-2xl font-medium p-1 -mb-4 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
     >
       Estudo
     </h2>
+    <div v-if="studiesStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
+      carregando Estudo...
+    </div>
+    <div
+      v-else-if="studiesStore.error"
+      class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
+    >
+      {{ studiesStore.error }}
+    </div>
+    <HomeStudie v-else-if="studiesStore.latestStudie" :studie="studiesStore.latestStudie" />
+    <div v-else class="text-neutral-950 text-lg">Nenhum Estudo disponível no momento.</div>
   </main>
 </template>

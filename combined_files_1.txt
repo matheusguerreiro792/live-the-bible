@@ -1,5 +1,872 @@
 
 
+=== ./src/stores/studies.ts ===
+
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { getLatestStudie, getStudies } from '@/firebase/services/studies'
+
+interface Studie {
+  id?: string
+  title: string
+  theme: string
+  content: string
+  createdAt: any
+}
+
+export const useStudiesStore = defineStore('studies', () => {
+  const latestStudie = ref<Studie | null>(null)
+  const allStudies = ref<Studie[]>([])
+  const selectedTheme = ref<string | null>(null)
+
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+
+  const LATEST_STUDIE_CACHE_KEY = 'latestStudieCache'
+  const LATEST_STUDIE_LAST_FETCH_DATE_KEY = 'latestStudieLastFetchDate'
+  const ALL_STUDIES_CACHE_KEY = 'allStudiesCache'
+  const ALL_STUDIES_LAST_FETCH_DATE_KEY = 'allStudiesLastFetchDate'
+
+  const isToday = (dateString: string): boolean => {
+    const today = new Date()
+    const cachedDate = new Date(dateString)
+    return (
+      today.getDate() === cachedDate.getDate() &&
+      today.getMonth() === cachedDate.getMonth() &&
+      today.getFullYear() === cachedDate.getFullYear()
+    )
+  }
+
+  const fetchLatestStudie = async () => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const cachedData = localStorage.getItem(LATEST_STUDIE_CACHE_KEY)
+      const lastFetchDate = localStorage.getItem(LATEST_STUDIE_LAST_FETCH_DATE_KEY)
+
+      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+        latestStudie.value = JSON.parse(cachedData) as Studie
+        console.log('Estudo mais recente carregado do cache local.')
+        return
+      }
+
+      console.log('Buscando estudo mais recente do Firestore...')
+      const studie = await getLatestStudie()
+
+      if (studie) {
+        latestStudie.value = studie
+
+        localStorage.setItem(LATEST_STUDIE_CACHE_KEY, JSON.stringify(studie))
+        localStorage.setItem(LATEST_STUDIE_LAST_FETCH_DATE_KEY, new Date().toISOString())
+        console.log('Estudo mais recente salvo no cache local.')
+      } else {
+        latestStudie.value = null
+        error.value = 'Nenhum estudo encontrado. Por favor, adicione um na área administrativa.'
+      }
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Erro desconhecido'
+      console.error('Erro ao buscar ou carregar estudo mais recente:', e)
+      error.value = `Erro ao carregar estudo: ${errorMessage || 'Verifique sua conexão e as regras do Firebase.'}`
+
+      localStorage.removeItem(LATEST_STUDIE_CACHE_KEY)
+      localStorage.removeItem(LATEST_STUDIE_LAST_FETCH_DATE_KEY)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const fetchAllStudies = async () => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const cachedData = localStorage.getItem(ALL_STUDIES_CACHE_KEY)
+      const lastFetchDate = localStorage.getItem(ALL_STUDIES_LAST_FETCH_DATE_KEY)
+
+      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+        allStudies.value = JSON.parse(cachedData) as Studie[]
+        console.log('Lista de estudos carregada do cache local.')
+        return
+      }
+
+      console.log('Buscando lista de estudos do Firestore...')
+      const studies = await getStudies()
+
+      if (studies && studies.length > 0) {
+        allStudies.value = studies as Studie[]
+        localStorage.setItem(ALL_STUDIES_CACHE_KEY, JSON.stringify(studies))
+        localStorage.setItem(ALL_STUDIES_LAST_FETCH_DATE_KEY, new Date().toISOString())
+        console.log('Lista de estudos salva no cache local.')
+      } else {
+        allStudies.value = []
+        error.value = 'Nenhum estudo encontrado na lista.'
+      }
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Erro desconhecido'
+      console.error('Erro ao buscar ou carregar lista de estudos:', e)
+      error.value = `Erro ao carregar lista de estudos: ${errorMessage || 'Verifique sua conexão e as regras do Firebase.'}`
+      localStorage.removeItem(ALL_STUDIES_CACHE_KEY)
+      localStorage.removeItem(ALL_STUDIES_LAST_FETCH_DATE_KEY)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const setSelectedTheme = (theme: string | null) => {
+    selectedTheme.value = theme
+  }
+
+  const filteredStudies = computed(() => {
+    if (!selectedTheme.value) {
+      return allStudies.value
+    }
+    return allStudies.value.filter((studie) => studie.theme === selectedTheme.value)
+  })
+
+  const clearCache = () => {
+    localStorage.removeItem(LATEST_STUDIE_CACHE_KEY)
+    localStorage.removeItem(LATEST_STUDIE_LAST_FETCH_DATE_KEY)
+    latestStudie.value = null
+
+    localStorage.removeItem(ALL_STUDIES_CACHE_KEY)
+    localStorage.removeItem(ALL_STUDIES_LAST_FETCH_DATE_KEY)
+    allStudies.value = []
+    selectedTheme.value = null
+
+    console.log('Cache de estudos limpo.')
+  }
+
+  return {
+    latestStudie,
+    allStudies,
+    isLoading,
+    error,
+    fetchLatestStudie,
+    fetchAllStudies,
+    selectedTheme,
+    setSelectedTheme,
+    filteredStudies,
+    clearCache,
+  }
+})
+
+
+=== ./src/firebase/services/studies.js ===
+
+import { db } from '../config'
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+} from 'firebase/firestore'
+
+export const getStudies = async () => {
+  try {
+    const studiesRef = collection(db, 'studies')
+
+    const q = query(studiesRef, orderBy('createdAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    const studies = []
+    querySnapshot.forEach((doc) => {
+      studies.push({ id: doc.id, ...doc.data() })
+    })
+    return studies
+  } catch (error) {
+    console.error('Erro ao buscar estudos:', error)
+    throw error
+  }
+}
+
+export const getStudie = async (id) => {
+  try {
+    const docRef = doc(db, 'studies', id)
+    const docSnapshot = await getDoc(docRef)
+    if (docSnapshot.exists()) {
+      return { id: docSnapshot.id, ...docSnapshot.data() }
+    } else {
+      return null
+    }
+  } catch (error) {
+    console.error('Erro ao buscar estudo:', error)
+    throw error
+  }
+}
+
+export const getLatestStudie = async () => {
+  try {
+    const studiesRef = collection(db, 'studies')
+
+    const q = query(studiesRef, orderBy('createdAt', 'desc'), limit(1))
+    const querySnapshot = await getDocs(q)
+
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0]
+      return { id: doc.id, ...doc.data() }
+    } else {
+      return null
+    }
+  } catch (error) {
+    console.error('Erro ao buscar o estudo mais recente:', error)
+    throw error
+  }
+}
+
+export const postStudie = async (studie) => {
+  try {
+    const studiesRef = collection(db, 'studies')
+    const docRef = await addDoc(studiesRef, studie)
+    return { id: docRef.id, ...studie }
+  } catch (error) {
+    console.error('Erro ao adicionar estudo:', error)
+    throw error
+  }
+}
+
+export const updateStudie = async (id, updatedData) => {
+  try {
+    const docRef = doc(db, 'studies', id)
+    await updateDoc(docRef, updatedData)
+    return { id, ...updatedData }
+  } catch (error) {
+    console.error('Erro ao atualizar estudo:', error)
+    throw error
+  }
+}
+
+export const deleteStudie = async (id) => {
+  try {
+    const docRef = doc(db, 'studies', id)
+    await deleteDoc(docRef)
+  } catch (error) {
+    console.error('Erro ao deletar estudo:', error)
+    throw error
+  }
+}
+
+
+=== ./src/firebase/services/studies.d.ts ===
+
+declare module '@/firebase/services/studies' {
+  export function getLatestStudie(): Promise<Studie | null>
+  export function getStudies(): Promise<Studie[]>
+}
+
+
+=== ./src/views/AdminView.vue ===
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import DevotionalForm from '@/components/DevotionalForm.vue'
+import StudiesForm from '@/components/StudiesForm.vue'
+
+const showDevotionalForm = ref(false)
+const showStudyForm = ref(false)
+
+const openDevotionalForm = () => {
+  showDevotionalForm.value = true
+}
+const closeDevotionalForm = () => {
+  showDevotionalForm.value = false
+}
+
+const openStudyForm = () => {
+  showStudyForm.value = true
+}
+const closeStudyForm = () => {
+  showStudyForm.value = false
+}
+</script>
+
+<template>
+  <main class="flex flex-col flex-1 bg-neutral-900 text-neutral-50 px-21 gap-4 p-4 items-center">
+    <h1 class="text-3xl font-semibold text-yellow-500 w-full">Admin</h1>
+    <div class="bg-neutral-800 flex flex-col gap-4 p-4 w-full rounded-lg shadow-md">
+      <div class="flex justify-between items-center p-4 border-2 rounded-lg border-neutral-900">
+        <h2 class="text-xl font-medium ml-3">Devotionals</h2>
+        <button
+          class="bg-green-600 py-2 px-3 rounded-lg cursor-pointer appearance-none hover:bg-green-700 active:bg-green-800"
+          @click="openDevotionalForm"
+        >
+          Create
+        </button>
+      </div>
+      <div class="flex justify-between items-center p-4 border-2 rounded-lg border-neutral-900">
+        <h2 class="text-xl font-medium ml-3">Studies</h2>
+        <button
+          class="bg-green-600 py-2 px-3 rounded-lg cursor-pointer appearance-none hover:bg-green-700 active:bg-green-800"
+          @click="openStudyForm"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+    <DevotionalForm v-if="showDevotionalForm" @close="closeDevotionalForm" />
+    <StudiesForm v-if="showStudyForm" @close="closeStudyForm" />
+  </main>
+</template>
+
+<style scoped></style>
+
+
+=== ./src/views/HomeView.vue ===
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import HomeDevotional from '@/components/HomeDevotional.vue'
+import HomeStudie from '@/components/HomeStudie.vue'
+import { useDevotionalsStore } from '@/stores/devotionals'
+import { useStudiesStore } from '@/stores/studies'
+
+const devotionalsStore = useDevotionalsStore()
+const studiesStore = useStudiesStore()
+
+onMounted(() => {
+  devotionalsStore.fetchLatestDevotional()
+  studiesStore.fetchLatestStudie()
+})
+</script>
+
+<template>
+  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-8 py-8 px-21">
+    <h2
+      class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
+    >
+      Devocional
+    </h2>
+    <div v-if="devotionalsStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
+      carregando Devocional...
+    </div>
+    <div
+      v-else-if="devotionalsStore.error"
+      class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
+    >
+      {{ devotionalsStore.error }}
+    </div>
+    <HomeDevotional
+      v-else-if="devotionalsStore.latestDevotional"
+      :devotional="devotionalsStore.latestDevotional"
+    />
+    <div v-else class="text-neutral-950 text-lg">Nenhum Devocional disponível no momento.</div>
+    <h2
+      class="text-2xl font-medium p-1 -mb-4 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
+    >
+      Estudo
+    </h2>
+    <div v-if="studiesStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
+      carregando Estudo...
+    </div>
+    <div
+      v-else-if="studiesStore.error"
+      class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
+    >
+      {{ studiesStore.error }}
+    </div>
+    <HomeStudie v-else-if="studiesStore.latestStudie" :studie="studiesStore.latestStudie" />
+    <div v-else class="text-neutral-950 text-lg">Nenhum Estudo disponível no momento.</div>
+  </main>
+</template>
+
+
+=== ./src/components/HomeDevotional.vue ===
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { marked } from 'marked'
+
+const props = defineProps<{
+  devotional: {
+    title: string
+    verse: { verse: string; versions: any }
+    theme: string
+    content: string
+  }
+}>()
+
+const renderedHtml = computed(() => {
+  return marked(props.devotional.content || '')
+})
+</script>
+
+<template>
+  <div
+    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full border border-neutral-100 overflow-hidden"
+  >
+    <div
+      class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium"
+    >
+      {{ devotional.theme }}
+    </div>
+
+    <h2 class="font-semibold text-3xl text-fuchsia-950">{{ devotional.title }}</h2>
+
+    <div
+      class="bg-fuchsia-100 border-l-4 border-fuchsia-900 font-bold px-3 py-2 text-lg rounded-r-md text-fuchsia-950"
+    >
+      {{ devotional.verse.verse }}
+    </div>
+
+    <ul class="flex flex-col gap-2 bg-fuchsia-50 py-2 px-4 rounded-md border border-fuchsia-100">
+      <li
+        v-for="(versionText, version) in devotional.verse.versions"
+        :key="version"
+        class="flex items-center gap-2"
+      >
+        <h3 class="font-bold text-fuchsia-900 w-9.5 text-xs uppercase">
+          {{ version }}
+        </h3>
+        <p class="text-fuchsia-950 font-medium">{{ versionText }}</p>
+      </li>
+    </ul>
+
+    <hr class="text-fuchsia-900 mt-2" />
+
+    <div class="markdown-content text-justify flex flex-col gap-4" v-html="renderedHtml"></div>
+  </div>
+</template>
+
+<style scoped>
+.markdown-content :deep(h2) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.markdown-content :deep(h3) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.markdown-content :deep(h4) {
+}
+
+.markdown-content :deep(p) {
+  color: var(--color-neutral-950);
+}
+
+.markdown-content :deep(strong) {
+  color: var(--color-fuchsia-900);
+  font-weight: 700;
+}
+
+.markdown-content :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown-content :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown-content :deep(hr) {
+  border-top: 1px solid var(--color-fuchsia-900);
+  margin-top: 0.25rem;
+}
+
+.markdown-content :deep(blockquote) {
+  background-color: var(--color-yellow-50);
+  border: 1px solid var(--color-yellow-200);
+  border-left: 4px solid var(--color-yellow-400);
+  padding: 0.25rem 0.63rem;
+  font-style: italic;
+  border-radius: 0 0.25rem 0.25rem 0;
+  color: var(--color-neutral-950);
+  font-size: 0.875rem;
+}
+</style>
+
+
+=== ./src/components/HomeStudie.vue ===
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { marked } from 'marked'
+
+const props = defineProps<{
+  studie: {
+    title: string
+    theme: string
+    content: string
+  }
+}>()
+
+const renderedHtml = computed(() => {
+  return marked(props.studie.content || '')
+})
+</script>
+
+<template>
+  <div
+    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full border border-neutral-100 overflow-hidden"
+  >
+    <div
+      class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium"
+    >
+      {{ studie.theme }}
+    </div>
+
+    <h2 class="font-semibold text-3xl text-fuchsia-950">{{ studie.title }}</h2>
+
+    <hr class="text-fuchsia-900 mt-2" />
+
+    <div class="markdown-content text-justify flex flex-col gap-4" v-html="renderedHtml"></div>
+  </div>
+</template>
+
+<style scoped>
+.markdown-content :deep(h2) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.markdown-content :deep(h3) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.markdown-content :deep(p) {
+  color: var(--color-neutral-950);
+}
+
+.markdown-content :deep(strong) {
+  color: var(--color-fuchsia-900);
+  font-weight: 700;
+}
+
+.markdown-content :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown-content :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown-content :deep(hr) {
+  border-top: 1px solid var(--color-fuchsia-900);
+  margin-top: 0.25rem;
+}
+
+.markdown-content :deep(blockquote) {
+  background-color: var(--color-yellow-50);
+  border: 1px solid var(--color-yellow-200);
+  border-left: 4px solid var(--color-yellow-400);
+  padding: 0.25rem 0.63rem;
+  font-style: italic;
+  border-radius: 0 0.25rem 0.25rem 0;
+  color: var(--color-neutral-950);
+  font-size: 0.875rem;
+}
+</style>
+
+
+=== ./src/views/StudiesView.vue ===
+
+<script setup lang="ts">
+import { onMounted, computed } from 'vue'
+import { useStudiesStore } from '@/stores/studies'
+import HomeStudie from '@/components/HomeStudie.vue'
+
+const studiesStore = useStudiesStore()
+
+// 1. Buscamos os dados ao montar o componente
+onMounted(() => {
+  studiesStore.fetchAllStudies()
+})
+
+// 2. Criamos uma lista de temas únicos para o filtro
+const availableThemes = computed(() => {
+  const themes = studiesStore.allStudies.map((s) => s.theme)
+  return [...new Set(themes)].sort()
+})
+
+// 3. Função para trocar o tema
+const handleThemeSelect = (theme: string | null) => {
+  studiesStore.setSelectedTheme(theme)
+}
+</script>
+
+<template>
+  <main class="flex flex-col flex-1 bg-neutral-200 px-4 md:px-21 py-8 gap-8 items-center">
+    <!-- Cabeçalho da Página -->
+    <header class="w-full flex flex-col gap-4">
+      <h1
+        class="text-3xl font-bold text-center py-2 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] shadow-md"
+      >
+        Estudos Bíblicos
+      </h1>
+
+      <!-- Barra de Filtros (Temas) -->
+      <div v-if="availableThemes.length > 0" class="flex flex-wrap justify-center gap-2 mt-2">
+        <button
+          @click="handleThemeSelect(null)"
+          :class="[
+            'px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-sm border',
+            !studiesStore.selectedTheme
+              ? 'bg-fuchsia-900 text-white border-fuchsia-900'
+              : 'bg-white text-fuchsia-900 border-fuchsia-200 hover:bg-fuchsia-50',
+          ]"
+        >
+          Todos
+        </button>
+        <button
+          v-for="theme in availableThemes"
+          :key="theme"
+          @click="handleThemeSelect(theme)"
+          :class="[
+            'px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-sm border',
+            studiesStore.selectedTheme === theme
+              ? 'bg-fuchsia-900 text-white border-fuchsia-900'
+              : 'bg-white text-fuchsia-900 border-fuchsia-200 hover:bg-fuchsia-50',
+          ]"
+        >
+          {{ theme }}
+        </button>
+      </div>
+    </header>
+
+    <!-- Estados de Carregamento e Erro -->
+    <div v-if="studiesStore.isLoading" class="flex flex-col items-center gap-2 mt-10">
+      <div
+        class="w-10 h-10 border-4 border-fuchsia-200 border-t-fuchsia-900 rounded-full animate-spin"
+      ></div>
+      <p class="text-fuchsia-900 font-semibold">Buscando estudos...</p>
+    </div>
+
+    <div
+      v-else-if="studiesStore.error"
+      class="w-full max-w-2xl p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center"
+    >
+      {{ studiesStore.error }}
+    </div>
+
+    <!-- Listagem de Estudos -->
+    <div
+      v-else-if="studiesStore.filteredStudies.length > 0"
+      class="flex flex-col gap-8 w-full max-w-4xl"
+    >
+      <HomeStudie
+        v-for="studie in studiesStore.filteredStudies"
+        :key="studie.id"
+        :studie="studie"
+      />
+    </div>
+
+    <!-- Estado Vazio -->
+    <div v-else class="text-neutral-500 text-lg mt-10 text-center">
+      Nenhum estudo encontrado para este tema. 📚
+    </div>
+  </main>
+</template>
+
+<style scoped>
+/* Adicionando uma transição suave para os cards na lista */
+.flex-col > * {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+
+
+=== ./src/components/StudiesForm.vue ===
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { serverTimestamp } from 'firebase/firestore'
+import IconXmark from './icons/IconXmark.vue'
+import { postStudie } from '@/firebase/services/studies'
+import { useStudiesStore } from '@/stores/studies'
+
+const devotionalStore = useStudiesStore()
+
+const newStudie = ref({
+  title: '',
+  theme: '',
+  content: '',
+  createdAt: null,
+})
+
+const handleSubmit = async () => {
+  try {
+    const dataToSave = {
+      ...newStudie.value,
+      createdAt: serverTimestamp(),
+    }
+
+    const savedStudie = await postStudie(dataToSave)
+    console.log('Estudo salvo com ID: ', savedStudie.id)
+    alert('Estudo salvo com sucesso!')
+
+    devotionalStore.clearCache()
+
+    newStudie.value = {
+      title: '',
+      theme: '',
+      content: '',
+      createdAt: null,
+    }
+  } catch (e) {
+    console.error('Erro ao adicionar devocional: ', e)
+    alert('Erro ao salvar devocional.')
+  }
+}
+</script>
+
+<template>
+  <div
+    class="relative bg-neutral-800 p-4 rounded-lg shadow-md flex flex-col gap-4 w-3/4 items-center"
+  >
+    <h2 class="font-semibold text-3xl text-fuchsia-400">New Studie</h2>
+    <button
+      @click="$emit('close')"
+      class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-neutral-50 text-xs font-medium p-1 rounded"
+    >
+      <IconXmark color="var(--color-neutral-50)" />
+    </button>
+
+    <form @submit.prevent="handleSubmit" class="flex flex-col gap-6 w-full">
+      <div class="flex flex-col gap-2">
+        <label for="title" class="text-fuchsia-400 text-sm font-medium">Title</label>
+        <input
+          type="text"
+          id="title"
+          v-model="newStudie.title"
+          class="text-neutral-50 bg-neutral-900 rounded-md py-2 px-3"
+          required
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="theme" class="text-fuchsia-400 text-sm font-medium">Theme</label>
+        <input
+          type="text"
+          id="theme"
+          v-model="newStudie.theme"
+          class="text-neutral-50 bg-neutral-900 rounded-md py-2 px-3"
+          required
+        />
+      </div>
+
+      <div class="border-t border-fuchsia-500 pt-4 flex flex-col gap-4">
+        <h3 class="text-lg font-semibold text-fuchsia-400">Studie Content (Markdown)</h3>
+        <textarea
+          v-model="newStudie.content"
+          rows="15"
+          class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50 font-mono"
+          placeholder="Use Markdown para formatar: # Título, **Negrito**, etc."
+          required
+        ></textarea>
+      </div>
+
+      <div class="">
+        <button
+          type="submit"
+          class="w-full inline-flex justify-center py-3 px-6 border border-transparent text-lg font-medium rounded-md text-neutral-50 bg-fuchsia-700 hover:bg-fuchsia-800"
+        >
+          Save Studie
+        </button>
+      </div>
+    </form>
+  </div>
+</template>
+
+
+=== ./src/router/index.ts ===
+
+import { createRouter, createWebHistory } from 'vue-router'
+import { auth } from '@/firebase/config'
+import HomeView from '@/views/HomeView.vue'
+import LoginView from '@/views/LoginView.vue'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/devocionais',
+      name: 'devocionais',
+      component: () => import('../views/DevotionalsView.vue'),
+    },
+    {
+      path: '/estudos',
+      name: 'estudos',
+      component: () => import('../views/StudiesView.vue'),
+    },
+    {
+      path: '/sobre',
+      name: 'sobre',
+      component: () => import('../views/AboutView.vue'),
+    },
+  ],
+})
+
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const currentUser = auth.currentUser
+
+  if (requiresAuth && !currentUser) {
+    console.log('Rota protegida, redirecionando para login.')
+    next('/login')
+  } else if (!requiresAuth && currentUser && to.path === '/login') {
+    console.log('Usuário já logado, redirecionando para admin.')
+    next('/admin')
+  } else {
+    next()
+  }
+})
+
+export default router
+
+
 === ./src/stores/devotionals.ts ===
 
 import { defineStore } from 'pinia'
@@ -18,18 +885,8 @@ interface Devotional {
     }
   }
   theme: string
-  introduction: string[]
-  analysis: {
-    title?: string
-    text: string[]
-  }[]
-  practicalApplication: {
-    title?: string
-    text: string[]
-  }[]
-  reflection: string[]
-  prayer: string[]
-  createdAt: string
+  content: string
+  createdAt: any
 }
 
 export const useDevotionalsStore = defineStore('devotionals', () => {
@@ -278,62 +1135,6 @@ declare module '@/firebase/services/devotionals' {
 }
 
 
-=== ./src/views/AdminView.vue ===
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import DevotionalForm from '@/components/DevotionalForm.vue'
-import StudiesForm from '@/components/StudiesForm.vue'
-
-const showDevotionalForm = ref(false)
-const showStudyForm = ref(false)
-
-const openDevotionalForm = () => {
-  showDevotionalForm.value = true
-}
-const closeDevotionalForm = () => {
-  showDevotionalForm.value = false
-}
-
-const openStudyForm = () => {
-  showStudyForm.value = true
-}
-const closeStudyForm = () => {
-  showStudyForm.value = false
-}
-</script>
-
-<template>
-  <main class="flex flex-col flex-1 bg-neutral-900 text-neutral-50 px-21 gap-4 p-4 items-center">
-    <h1 class="text-3xl font-semibold text-yellow-500 w-full">Admin</h1>
-    <div class="bg-neutral-800 flex flex-col gap-4 p-4 w-full rounded-lg shadow-md">
-      <div class="flex justify-between items-center p-4 border-2 rounded-lg border-neutral-900">
-        <h2 class="text-xl font-medium ml-3">Devotionals</h2>
-        <button
-          class="bg-green-600 py-2 px-3 rounded-lg cursor-pointer appearance-none hover:bg-green-700 active:bg-green-800"
-          @click="openDevotionalForm"
-        >
-          Create
-        </button>
-      </div>
-      <div class="flex justify-between items-center p-4 border-2 rounded-lg border-neutral-900">
-        <h2 class="text-xl font-medium ml-3">Studies</h2>
-        <button
-          class="bg-green-600 py-2 px-3 rounded-lg cursor-pointer appearance-none hover:bg-green-700 active:bg-green-800"
-          @click="openStudyForm"
-        >
-          Create
-        </button>
-      </div>
-    </div>
-    <DevotionalForm v-if="showDevotionalForm" @close="closeDevotionalForm" />
-    <StudiesForm v-if="showStudyForm" @close="closeStudyForm" />
-  </main>
-</template>
-
-<style scoped></style>
-
-
 === ./src/views/DevotionalsView.vue ===
 
 <script setup lang="ts">
@@ -454,7 +1255,7 @@ onMounted(() => {
       <div
         v-for="devotional in devotionalStore.filteredDevotionals"
         :key="devotional.id"
-        class="p-4 w-fit border border-fuchsia-950 rounded-lg shadow bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden"
+        class="p-4 w-fit border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden"
         @click="handleDevotionalClick(devotional)"
       >
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ devotional.title }}</h2>
@@ -463,10 +1264,7 @@ onMounted(() => {
           >{{ devotional.verse.verse }}</strong
         >
         <div class="absolute bottom-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-tl-md">
-          <span
-            class="shadow-lg text-xs font-medium bg-linear-to-tr from-zinc-300 via-zinc-100 to-zinc-300 bg-clip-text text-transparent drop-shadow-sm"
-            >{{ devotional.theme }}</span
-          >
+          <span class="text-xs font-medium text-neutral-50">{{ devotional.theme }}</span>
         </div>
       </div>
     </div>
@@ -487,13 +1285,12 @@ onMounted(() => {
 
 <script setup lang="ts">
 import { ref } from 'vue'
-// Removido 'db', 'collection', 'addDoc' daqui
-import { serverTimestamp } from 'firebase/firestore' // serverTimestamp ainda é usado
+import { serverTimestamp } from 'firebase/firestore'
 import IconXmark from './icons/IconXmark.vue'
-import { postDevotional } from '@/firebase/services/devotionals' // Importa o serviço
-import { useDevotionalsStore } from '@/stores/devotionals' // Importa o store para limpar o cache
+import { postDevotional } from '@/firebase/services/devotionals'
+import { useDevotionalsStore } from '@/stores/devotionals'
 
-const devotionalStore = useDevotionalsStore() // Instancia o store
+const devotionalStore = useDevotionalsStore()
 
 const newDevotional = ref({
   title: '',
@@ -506,101 +1303,33 @@ const newDevotional = ref({
     },
   },
   theme: '',
-  introduction: [''],
-  analysis: [{ title: '', text: [''] }],
-  practicalApplication: [{ title: '', text: [''] }],
-  reflection: [''],
-  prayer: [''],
+  content: '',
   createdAt: null,
 })
 
-// Funções auxiliares para adicionar/remover itens de arrays (mantidas)
-const addParagraph = (array: string[]) => {
-  array.push('')
-}
-
-const removeParagraph = (array: string[], index: number) => {
-  if (array.length > 1) {
-    array.splice(index, 1)
-  }
-}
-
-const addAnalysisItem = () => {
-  newDevotional.value.analysis.push({ title: '', text: [''] })
-}
-
-const removeAnalysisItem = (index: number) => {
-  if (newDevotional.value.analysis.length > 1) {
-    newDevotional.value.analysis.splice(index, 1)
-  }
-}
-
-const addAnalysisParagraph = (item: { title?: string; text: string[] }) => {
-  item.text.push('')
-}
-
-const removeAnalysisParagraph = (item: { title?: string; text: string[] }, index: number) => {
-  if (item.text.length > 1) {
-    item.text.splice(index, 1)
-  }
-}
-
-const addPracticalApplicationItem = () => {
-  newDevotional.value.practicalApplication.push({ title: '', text: [''] })
-}
-
-const removePracticalApplicationItem = (index: number) => {
-  if (newDevotional.value.practicalApplication.length > 1) {
-    newDevotional.value.practicalApplication.splice(index, 1)
-  }
-}
-
-const addPracticalApplicationParagraph = (item: { title?: string; text: string[] }) => {
-  item.text.push('')
-}
-
-const removePracticalApplicationParagraph = (
-  item: { title?: string; text: string[] },
-  index: number,
-) => {
-  if (item.text.length > 1) {
-    item.text.splice(index, 1)
-  }
-}
-
-// Função para lidar com o envio do formulário
 const handleSubmit = async () => {
   try {
-    newDevotional.value.createdAt = serverTimestamp()
+    const dataToSave = {
+      ...newDevotional.value,
+      createdAt: serverTimestamp(),
+    }
 
-    const savedDevotional = await postDevotional(newDevotional.value)
+    const savedDevotional = await postDevotional(dataToSave)
     console.log('Devocional salvo com ID: ', savedDevotional.id)
     alert('Devocional salvo com sucesso!')
 
     devotionalStore.clearCache()
-    // devotionalStore.fetchLatestDevotional(); // Pode ser útil se você quiser que a HomeView atualize imediatamente
 
     newDevotional.value = {
       title: '',
-      verse: {
-        verse: '',
-        versions: {
-          arc: '',
-          nvi: '',
-          ntlh: '',
-        },
-      },
+      verse: { verse: '', versions: { arc: '', nvi: '', ntlh: '' } },
       theme: '',
-      introduction: [''],
-      analysis: [{ title: '', text: [''] }],
-      practicalApplication: [{ title: '', text: [''] }],
-      reflection: [''],
-      prayer: [''],
+      content: '',
       createdAt: null,
     }
   } catch (e) {
     console.error('Erro ao adicionar devocional: ', e)
-    alert('Erro ao salvar devocional. Verifique o console para mais detalhes.')
+    alert('Erro ao salvar devocional.')
   }
 }
 </script>
@@ -618,7 +1347,6 @@ const handleSubmit = async () => {
     </button>
 
     <form @submit.prevent="handleSubmit" class="flex flex-col gap-6 w-full">
-      <!-- Título do Devocional -->
       <div class="flex flex-col gap-2">
         <label for="title" class="text-fuchsia-400 text-sm font-medium">Title</label>
         <input
@@ -630,7 +1358,6 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Versículo Base -->
       <div class="border-t border-fuchsia-400 pt-4 flex flex-col gap-4">
         <h3 class="text-lg font-semibold text-fuchsia-400">Verse</h3>
         <div class="flex flex-col gap-4">
@@ -678,7 +1405,6 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <!-- Tema do Devocional -->
       <div class="flex flex-col gap-2">
         <label for="theme" class="text-fuchsia-400 text-sm font-medium">Theme</label>
         <input
@@ -690,250 +1416,17 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Introdução -->
       <div class="border-t border-fuchsia-500 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Introduction</h3>
-        <div
-          v-for="(paragraph, index) in newDevotional.introduction"
-          :key="index"
-          class="flex items-center gap-2"
-        >
-          <textarea
-            v-model="newDevotional.introduction[index]"
-            rows="4"
-            class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50"
-            :placeholder="`Parágrafo ${index + 1} da Introdução`"
-            required
-          ></textarea>
-          <button
-            type="button"
-            @click="removeParagraph(newDevotional.introduction, index)"
-            class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-            v-if="newDevotional.introduction.length > 1"
-          >
-            Delete
-          </button>
-        </div>
-        <button
-          type="button"
-          @click="addParagraph(newDevotional.introduction)"
-          class="inline-flex w-fit items-center px-3 py-2 border border-transparent font-medium rounded-md text-neutral-50 bg-fuchsia-700 hover:bg-fuchsia-800 focus:outline-none"
-        >
-          Add Paragraph
-        </button>
+        <h3 class="text-lg font-semibold text-fuchsia-400">Devotional Content (Markdown)</h3>
+        <textarea
+          v-model="newDevotional.content"
+          rows="15"
+          class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50 font-mono"
+          placeholder="Use Markdown para formatar: # Título, **Negrito**, etc."
+          required
+        ></textarea>
       </div>
 
-      <!-- Análise Profunda -->
-      <div class="border-t border-fuchsia-400 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Deep Analysis</h3>
-        <div
-          v-for="(analysisItem, itemIndex) in newDevotional.analysis"
-          :key="itemIndex"
-          class="py-2 px-3 rounded-md bg-neutral-900 flex flex-col gap-2"
-        >
-          <div class="flex justify-between items-center gap-2">
-            <h4 class="font-medium text-fuchsia-400">Analysis Item {{ itemIndex + 1 }}</h4>
-            <button
-              type="button"
-              @click="removeAnalysisItem(itemIndex)"
-              class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-              v-if="newDevotional.analysis.length > 1"
-            >
-              Delete Item
-            </button>
-          </div>
-          <div class="flex items-center gap-2">
-            <label
-              :for="`analysis-title-${itemIndex}`"
-              class="font-medium text-nowrap text-fuchsia-400 text-sm"
-              >Item Title (Optional):</label
-            >
-            <input
-              type="text"
-              :id="`analysis-title-${itemIndex}`"
-              v-model="analysisItem.title"
-              class="rounded-md py-2 px-3 bg-neutral-800 w-full text-neutral-50"
-              :placeholder="`Título para o item de análise ${itemIndex + 1}`"
-            />
-          </div>
-          <div
-            v-for="(paragraph, paragraphIndex) in analysisItem.text"
-            :key="paragraphIndex"
-            class="flex items-center gap-2"
-          >
-            <textarea
-              v-model="analysisItem.text[paragraphIndex]"
-              rows="4"
-              class="w-full rounded-md py-2 px-3 bg-neutral-800 text-neutral-50"
-              :placeholder="`Parágrafo ${paragraphIndex + 1} do item de análise ${itemIndex + 1}`"
-              required
-            ></textarea>
-            <button
-              type="button"
-              @click="removeAnalysisParagraph(analysisItem, paragraphIndex)"
-              class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-              v-if="analysisItem.text.length > 1"
-            >
-              Delete
-            </button>
-          </div>
-          <button
-            type="button"
-            @click="addAnalysisParagraph(analysisItem)"
-            class="inline-flex items-center px-3 py-2 border border-transparent font-medium rounded-md text-neutral-50 bg-fuchsia-600 hover:bg-fuchsia-700 w-fit"
-          >
-            Add Paragraph to Analysis
-          </button>
-        </div>
-        <button
-          type="button"
-          @click="addAnalysisItem"
-          class="inline-flex items-center px-3 py-2 border border-transparent font-medium rounded-md text-neutral-50 bg-fuchsia-600 w-fit hover:bg-fuchsia-700"
-        >
-          Add New Analysis Item
-        </button>
-      </div>
-
-      <!-- Aplicação Prática -->
-      <div class="border-t border-fuchsia-400 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Aplicação Prática</h3>
-        <div
-          v-for="(practicalItem, itemIndex) in newDevotional.practicalApplication"
-          :key="itemIndex"
-          class="py-2 px-3 rounded-md bg-neutral-900 flex flex-col gap-2"
-        >
-          <div class="flex justify-between items-center">
-            <h4 class="text-base font-medium text-fuchsia-400">
-              Application Item {{ itemIndex + 1 }}
-            </h4>
-            <button
-              type="button"
-              @click="removePracticalApplicationItem(itemIndex)"
-              class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-              v-if="newDevotional.practicalApplication.length > 1"
-            >
-              Delete
-            </button>
-          </div>
-          <div class="flex items-center gap-2">
-            <label
-              :for="`practical-title-${itemIndex}`"
-              class="font-medium text-sm text-nowrap text-fuchsia-400"
-              >Item Title (Optional):</label
-            >
-            <input
-              type="text"
-              :id="`practical-title-${itemIndex}`"
-              v-model="practicalItem.title"
-              class="rounded-md w-full py-2 px-3 bg-neutral-800 text-neutral-50"
-              :placeholder="`Título para o item de aplicação ${itemIndex + 1}`"
-            />
-          </div>
-          <div
-            v-for="(paragraph, paragraphIndex) in practicalItem.text"
-            :key="paragraphIndex"
-            class="flex items-center gap-2"
-          >
-            <textarea
-              v-model="practicalItem.text[paragraphIndex]"
-              rows="4"
-              class="w-full rounded-md py-2 px-3 bg-neutral-800 text-neutral-50"
-              :placeholder="`Parágrafo ${paragraphIndex + 1} do item de aplicação ${itemIndex + 1}`"
-              required
-            ></textarea>
-            <button
-              type="button"
-              @click="removePracticalApplicationParagraph(practicalItem, paragraphIndex)"
-              class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-              v-if="practicalItem.text.length > 1"
-            >
-              Delete
-            </button>
-          </div>
-          <button
-            type="button"
-            @click="addPracticalApplicationParagraph(practicalItem)"
-            class="inline-flex items-center px-3 py-2 border border-transparent w-fit font-medium rounded-md text-neutral-50 bg-fuchsia-600 hover:bg-fuchsia-700"
-          >
-            Add Paragraph to Application
-          </button>
-        </div>
-        <button
-          type="button"
-          @click="addPracticalApplicationItem"
-          class="inline-flex items-center px-3 py-2 border border-transparent w-fit font-medium rounded-md text-neutral-50 bg-fuchsia-600 hover:bg-fuchsia-700"
-        >
-          Add New Application Item
-        </button>
-      </div>
-
-      <!-- Reflexão Pessoal -->
-      <div class="border-t border-fuchsia-400 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Personal Reflection</h3>
-        <div
-          v-for="(paragraph, index) in newDevotional.reflection"
-          :key="index"
-          class="flex items-center gap-2"
-        >
-          <textarea
-            v-model="newDevotional.reflection[index]"
-            rows="4"
-            class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50"
-            :placeholder="`Pergunta ou Parágrafo ${index + 1} da Reflexão`"
-            required
-          ></textarea>
-          <button
-            type="button"
-            @click="removeParagraph(newDevotional.reflection, index)"
-            class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-            v-if="newDevotional.reflection.length > 1"
-          >
-            Delete
-          </button>
-        </div>
-        <button
-          type="button"
-          @click="addParagraph(newDevotional.reflection)"
-          class="inline-flex items-center px-3 py-2 border w-fit border-transparent font-medium rounded-md text-neutral-50 bg-fuchsia-600 hover:bg-fuchsia-700"
-        >
-          Add Paragraph/Question
-        </button>
-      </div>
-
-      <!-- Oração -->
-      <div class="border-t border-fuchsia-400 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Prayer</h3>
-        <div
-          v-for="(paragraph, index) in newDevotional.prayer"
-          :key="index"
-          class="flex items-center gap-2"
-        >
-          <textarea
-            v-model="newDevotional.prayer[index]"
-            rows="4"
-            class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50"
-            :placeholder="`Parágrafo ${index + 1} da Oração`"
-            required
-          ></textarea>
-          <button
-            type="button"
-            @click="removeParagraph(newDevotional.prayer, index)"
-            class="bg-red-600 hover:bg-red-700 py-2 px-3 rounded-md text-neutral-50 text-sm font-medium"
-            v-if="newDevotional.prayer.length > 1"
-          >
-            Delete
-          </button>
-        </div>
-        <button
-          type="button"
-          @click="addParagraph(newDevotional.prayer)"
-          class="inline-flex items-center w-fit px-3 py-2 font-medium rounded-md text-neutral-50 bg-fuchsia-600 hover:bg-fuchsia-700"
-        >
-          Add Paragraph
-        </button>
-      </div>
-
-      <!-- Botão de Envio -->
       <div class="">
         <button
           type="submit"
@@ -950,9 +1443,11 @@ const handleSubmit = async () => {
 === ./src/components/DevotionalsDevotional.vue ===
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { marked } from 'marked'
 import IconXmark from './icons/IconXmark.vue'
 
-defineProps<{
+const props = defineProps<{
   devotional: {
     title: string
     verse: {
@@ -964,21 +1459,15 @@ defineProps<{
       }
     }
     theme: string
-    introduction: string[]
-    analysis: {
-      title?: string
-      text: string[]
-    }[]
-    practicalApplication: {
-      title?: string
-      text: string[]
-    }[]
-    reflection: string[]
-    prayer: string[]
+    content: string
   } | null
 }>()
 
 const emit = defineEmits(['close'])
+
+const renderedHtml = computed(() => {
+  return marked(props.devotional?.content || '')
+})
 
 const closeDevotional = () => {
   emit('close')
@@ -988,333 +1477,109 @@ const closeDevotional = () => {
 <template>
   <div
     v-if="devotional"
-    class="absolute top-0 left-0 w-full h-full bg-neutral-950/75 flex items-center justify-center"
+    class="fixed top-0 left-0 z-30 h-full bg-neutral-950/75 flex items-center justify-center pt-4 pb-7"
+    @click.self="closeDevotional"
   >
-    <div class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-3/4 h-full overflow-y-auto relative">
+    <div
+      class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-full max-w-4/5 h-full overflow-y-auto relative rounded-lg shadow-lg"
+    >
       <button
         @click="closeDevotional"
-        class="absolute top-6 right-5 bg-red-700 hover:bg-red-800 text-neutral-50 rounded-full text-sm font-medium flex items-center justify-center w-6 h-6"
+        class="absolute top-1 right-5 bg-red-700 hover:bg-red-800 text-neutral-50 rounded-full flex items-center justify-center w-5 h-5 transition-colors z-10"
         aria-label="Fechar devocional"
       >
-        <IconXmark color="currentColor" class="w-3.5 h-3.5" />
+        <IconXmark color="currentColor" class="w-3 h-3" />
       </button>
 
       <div class="flex flex-col gap-4">
-        <div class="absolute top-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-bl-md">
-          <span
-            class="text-xs font-medium bg-linear-to-tr from-zinc-300 via-zinc-100 to-zinc-300 bg-clip-text text-transparent"
-            >{{ devotional.theme }}</span
-          >
-        </div>
-        <h2 class="font-semibold text-2xl text-fuchsia-950 w-fit">
-          {{ devotional.title }}
-        </h2>
-        <strong
-          class="bg-fuchsia-50 border border-fuchsia-900 w-fit text-fuchsia-950 rounded-md px-2 py-1 flex items-center"
-          >{{ devotional.verse.verse }}</strong
+        <div
+          class="absolute top-0 right-14 bg-fuchsia-900 py-1 px-2 rounded-b-md text-neutral-50 text-xs font-medium"
         >
-        <ul class="flex flex-col gap-2">
-          <li class="flex items-center gap-4">
-            <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-            <strong class="font-semibold text-xs w-8 text-fuchsia-900">ARC</strong>
-            <span>{{ devotional.verse.versions.arc }}</span>
-          </li>
-          <li class="flex items-center gap-4">
-            <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-            <strong class="font-semibold text-xs w-8 text-fuchsia-900">NVI</strong>
-            <span>{{ devotional.verse.versions.nvi }}</span>
-          </li>
-          <li class="flex items-center gap-4">
-            <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-            <strong class="font-semibold text-xs w-8 text-fuchsia-900">NTLH</strong>
-            <span>{{ devotional.verse.versions.ntlh }}</span>
-          </li>
-        </ul>
-        <hr class="text-fuchsia-900 -mb-0.5" />
-        <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Introdução</h3>
-        <p v-for="(p, i) in devotional.introduction" :key="i" class="text-justify">{{ p }}</p>
-        <hr class="text-fuchsia-900 -mb-0.5" />
-        <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Análise Profunda</h3>
-        <p v-for="(p, i) in devotional.analysis[0]?.text" :key="i" class="text-justify">{{ p }}</p>
-        <div v-for="(o, i) in devotional.analysis.slice(1)" :key="i" class="flex flex-col gap-2">
-          <h4 class="text-fuchsia-900 font-semibold text-base">{{ o.title }}</h4>
-          <p v-for="(p, j) in o.text" :key="j" class="text-justify">{{ p }}</p>
+          {{ devotional.theme }}
         </div>
-        <hr class="text-fuchsia-900 -mb-0.5" />
-        <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Aplicação Prática</h3>
-        <p v-for="(p, i) in devotional.practicalApplication[0]?.text" :key="i" class="text-justify">
-          {{ p }}
-        </p>
-        <ol class="flex flex-col gap-4">
+
+        <h2 class="font-semibold text-3xl text-fuchsia-950">{{ devotional.title }}</h2>
+
+        <div
+          class="bg-fuchsia-100 border-l-4 border-fuchsia-900 font-bold px-3 py-2 text-lg rounded-r-md text-fuchsia-950"
+        >
+          {{ devotional.verse.verse }}
+        </div>
+
+        <ul
+          class="flex flex-col gap-2 bg-fuchsia-50 py-2 px-4 rounded-md border border-fuchsia-100"
+        >
           <li
-            v-for="(o, i) in devotional.practicalApplication.slice(1)"
-            :key="i"
-            class="text-justify list-decimal list-inside flex flex-col gap-2"
+            v-for="(versionText, version) in devotional.verse.versions"
+            :key="version"
+            class="flex items-center gap-2"
           >
-            <strong class="text-fuchsia-900 font-semibold">
-              <span class="text-neutral-950 font-normal text-sm">{{ i + 1 }}.</span>
-              {{ o.title }}</strong
-            >
-            <p v-for="(p, j) in o.text" :key="j" class="text-justify">
-              {{ p }}
-            </p>
-          </li>
-        </ol>
-        <hr class="text-fuchsia-900 -mb-0.5" />
-        <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Reflexão Pessoal</h3>
-        <p class="text-justify">{{ devotional.reflection[0] }}</p>
-        <ul class="flex flex-col gap-1">
-          <li
-            v-for="(p, i) in devotional.reflection.slice(1)"
-            :key="i"
-            class="text-justify list-disc list-inside"
-          >
-            {{ p }}
+            <h3 class="font-bold text-fuchsia-900 w-9.5 text-xs uppercase">
+              {{ version }}
+            </h3>
+            <p class="text-fuchsia-950 font-medium">{{ versionText }}</p>
           </li>
         </ul>
-        <hr class="text-fuchsia-900 -mb-0.5" />
-        <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Oração</h3>
-        <p v-for="(p, i) in devotional.prayer" :key="i" class="text-justify">{{ p }}</p>
+
+        <hr class="text-fuchsia-900 mt-2" />
+
+        <div class="markdown-content text-justify flex flex-col gap-4" v-html="renderedHtml"></div>
       </div>
     </div>
   </div>
 </template>
 
+<style scoped>
+.markdown-content :deep(h2) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
 
-=== ./src/views/HomeView.vue ===
+.markdown-content :deep(h3) {
+  color: var(--color-fuchsia-950);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
 
-<script setup lang="ts">
-import { onMounted } from 'vue'
-import HomeDevotional from '@/components/HomeDevotional.vue'
-import { useDevotionalsStore } from '@/stores/devotionals'
+.markdown-content :deep(p) {
+  color: var(--color-neutral-950);
+}
 
-const devotionalStore = useDevotionalsStore()
+.markdown-content :deep(strong) {
+  color: var(--color-fuchsia-900);
+  font-weight: 700;
+}
 
-onMounted(() => {
-  devotionalStore.fetchLatestDevotional()
-})
-</script>
+.markdown-content :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
-<template>
-  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-4 py-8 px-21">
-    <h2
-      class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
-    >
-      Devocional
-    </h2>
-    <div v-if="devotionalStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
-      Carregando devocional...
-    </div>
-    <div
-      v-else-if="devotionalStore.error"
-      class="text-red-700 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
-    >
-      {{ devotionalStore.error }}
-    </div>
-    <HomeDevotional
-      v-else-if="devotionalStore.latestDevotional"
-      :devotional="devotionalStore.latestDevotional"
-    />
-    <div v-else class="text-neutral-950 text-lg">Nenhum devocional disponível no momento.</div>
-    <h2
-      class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
-    >
-      Estudo
-    </h2>
-  </main>
-</template>
+.markdown-content :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
+.markdown-content :deep(hr) {
+  border-top: 1px solid var(--color-fuchsia-900);
+  margin-top: 0.25rem;
+}
 
-=== ./src/components/HomeDevotional.vue ===
-
-<script setup lang="ts">
-defineProps<{
-  devotional: {
-    title: string
-    verse: {
-      verse: string
-      versions: {
-        arc: string
-        nvi: string
-        ntlh: string
-      }
-    }
-    theme: string
-    introduction: string[]
-    analysis: {
-      title?: string
-      text: string[]
-    }[]
-    practicalApplication: {
-      title?: string
-      text: string[]
-    }[]
-    reflection: string[]
-    prayer: string[]
-  }
-}>()
-</script>
-
-<template>
-  <div
-    class="relative bg-neutral-50 py-4 px-5 gap-4 rounded-lg shadow-md overflow-hidden flex flex-col"
-  >
-    <div class="absolute top-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-bl-md">
-      <span
-        class="shadow-lg text-xs font-medium bg-gradient-to-tr from-zinc-300 via-zinc-100 to-zinc-300 bg-clip-text text-transparent drop-shadow-sm"
-        >{{ devotional.theme }}</span
-      >
-    </div>
-    <h2 class="font-semibold text-2xl py-0 text-fuchsia-950 px-1 rounded-md w-fit">
-      {{ devotional.title }}
-    </h2>
-    <strong
-      class="bg-fuchsia-50 border border-fuchsia-900 w-fit text-fuchsia-950 rounded-md px-2 py-0.5 flex items-center"
-      >{{ devotional.verse.verse }}</strong
-    >
-    <ul class="flex flex-col gap-2">
-      <li class="flex items-center gap-4">
-        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8 text-fuchsia-900">ARC</strong>
-        <span>{{ devotional.verse.versions.arc }}</span>
-      </li>
-      <li class="flex items-center gap-4">
-        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8 text-fuchsia-900">NVI</strong>
-        <span>{{ devotional.verse.versions.nvi }}</span>
-      </li>
-      <li class="flex items-center gap-4">
-        <div class="bg-fuchsia-950 w-1.5 h-1.5 rounded-full"></div>
-        <strong class="font-semibold text-xs w-8 text-fuchsia-900">NTLH</strong>
-        <span>{{ devotional.verse.versions.ntlh }}</span>
-      </li>
-    </ul>
-    <hr class="text-fuchsia-900 -mb-0.5" />
-    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Introdução</h3>
-    <p v-for="(p, i) in devotional.introduction" :key="i" class="text-justify">{{ p }}</p>
-    <hr class="text-fuchsia-900 -mb-0.5" />
-    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Análise Profunda</h3>
-    <p v-for="(p, i) in devotional.analysis[0]?.text" :key="i" class="text-justify">{{ p }}</p>
-    <div v-for="(o, i) in devotional.analysis.slice(1)" :key="i" class="flex flex-col gap-2">
-      <h4 class="text-fuchsia-900 font-semibold text-base">{{ o.title }}</h4>
-      <p v-for="(p, j) in o.text" :key="j" class="text-justify">{{ p }}</p>
-    </div>
-    <hr class="text-fuchsia-900 -mb-0.5" />
-    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Aplicação Prática</h3>
-    <p v-for="(p, i) in devotional.practicalApplication[0]?.text" :key="i" class="text-justify">
-      {{ p }}
-    </p>
-    <ol class="flex flex-col gap-4">
-      <li
-        v-for="(o, i) in devotional.practicalApplication.slice(1)"
-        :key="i"
-        class="text-justify list-decimal list-inside flex flex-col gap-2"
-      >
-        <strong class="text-fuchsia-900 font-semibold">
-          <span class="text-neutral-950 font-normal text-sm">{{ i + 1 }}.</span>
-          {{ o.title }}</strong
-        >
-        <p v-for="(p, j) in o.text" :key="j" class="text-justify">
-          {{ p }}
-        </p>
-      </li>
-    </ol>
-    <hr class="text-fuchsia-900 -mb-0.5" />
-    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Reflexão Pessoal</h3>
-    <p class="text-justify">{{ devotional.reflection[0] }}</p>
-    <ul class="flex flex-col gap-1">
-      <li
-        v-for="(p, i) in devotional.reflection.slice(1)"
-        :key="i"
-        class="text-justify list-disc list-inside"
-      >
-        {{ p }}
-      </li>
-    </ul>
-    <hr class="text-fuchsia-900 -mb-0.5" />
-    <h3 class="text-fuchsia-950 font-semibold text-lg -mb-2">Oração</h3>
-    <p v-for="(p, i) in devotional.prayer" :key="i" class="text-justify">{{ p }}</p>
-  </div>
-</template>
-
-
-=== ./src/views/StudiesView.vue ===
-
-<script setup lang="ts"></script>
-
-<template>
-  <main class="flex flex-col flex-1 px-21 py-7">Em desenvolvimento...</main>
-</template>
-
-
-=== ./src/components/StudiesForm.vue ===
-
-<script setup lang="ts"></script>
-
-<template>
-  <div>formulário de estudos</div>
-</template>
-
-
-=== ./src/router/index.ts ===
-
-import { createRouter, createWebHistory } from 'vue-router'
-import { auth } from '@/firebase/config'
-import { onAuthStateChanged } from 'firebase/auth'
-import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import AdminView from '@/views/AdminView.vue'
-
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      component: () => import('../views/AdminView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/devocionais',
-      name: 'devocionais',
-      component: () => import('../views/DevotionalsView.vue'),
-    },
-    {
-      path: '/estudos',
-      name: 'estudos',
-      component: () => import('../views/StudiesView.vue'),
-    },
-    {
-      path: '/sobre',
-      name: 'sobre',
-      component: () => import('../views/AboutView.vue'),
-    },
-  ],
-})
-
-router.beforeEach(async (to, from, next) => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
-  const currentUser = auth.currentUser
-
-  if (requiresAuth && !currentUser) {
-    console.log('Rota protegida, redirecionando para login.')
-    next('/login')
-  } else if (!requiresAuth && currentUser && to.path === '/login') {
-    console.log('Usuário já logado, redirecionando para admin.')
-    next('/admin')
-  } else {
-    next()
-  }
-})
-
-export default router
+.markdown-content :deep(blockquote) {
+  background-color: var(--color-yellow-50);
+  border: 1px solid var(--color-yellow-200);
+  border-left: 4px solid var(--color-yellow-400);
+  padding: 0.25rem 0.63rem;
+  font-style: italic;
+  border-radius: 0 0.25rem 0.25rem 0;
+  color: var(--color-neutral-950);
+  font-size: 0.875rem;
+}
+</style>

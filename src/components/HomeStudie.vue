@@ -3,16 +3,15 @@ import { computed } from 'vue'
 import { marked } from 'marked'
 
 const props = defineProps<{
-  devotional: {
+  studie: {
     title: string
-    verse: { verse: string; versions: any }
     theme: string
     content: string
   }
 }>()
 
 const renderedHtml = computed(() => {
-  return marked(props.devotional.content || '')
+  return marked(props.studie.content || '')
 })
 </script>
 
@@ -23,29 +22,10 @@ const renderedHtml = computed(() => {
     <div
       class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium"
     >
-      {{ devotional.theme }}
+      {{ studie.theme }}
     </div>
 
-    <h2 class="font-semibold text-3xl text-fuchsia-950">{{ devotional.title }}</h2>
-
-    <div
-      class="bg-fuchsia-100 border-l-4 border-fuchsia-900 font-bold px-3 py-2 text-lg rounded-r-md text-fuchsia-950"
-    >
-      {{ devotional.verse.verse }}
-    </div>
-
-    <ul class="flex flex-col gap-2 bg-fuchsia-50 py-2 px-4 rounded-md border border-fuchsia-100">
-      <li
-        v-for="(versionText, version) in devotional.verse.versions"
-        :key="version"
-        class="flex items-center gap-2"
-      >
-        <h3 class="font-bold text-fuchsia-900 w-9.5 text-xs uppercase">
-          {{ version }}
-        </h3>
-        <p class="text-fuchsia-950 font-medium">{{ versionText }}</p>
-      </li>
-    </ul>
+    <h2 class="font-semibold text-3xl text-fuchsia-950">{{ studie.title }}</h2>
 
     <hr class="text-fuchsia-900 mt-2" />
 
@@ -64,9 +44,6 @@ const renderedHtml = computed(() => {
   color: var(--color-fuchsia-950);
   font-weight: 600;
   font-size: 1.125rem;
-}
-
-.markdown-content :deep(h4) {
 }
 
 .markdown-content :deep(p) {

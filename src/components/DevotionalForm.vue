@@ -132,7 +132,7 @@ const handleSubmit = async () => {
       </div>
 
       <div class="border-t border-fuchsia-500 pt-4 flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-fuchsia-400">Conteúdo do Devocional (Markdown)</h3>
+        <h3 class="text-lg font-semibold text-fuchsia-400">Devotional Content (Markdown)</h3>
         <textarea
           v-model="newDevotional.content"
           rows="15"

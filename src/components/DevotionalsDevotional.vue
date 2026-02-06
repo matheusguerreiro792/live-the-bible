@@ -98,9 +98,6 @@ const closeDevotional = () => {
   font-size: 1.125rem;
 }
 
-.markdown-content :deep(h4) {
-}
-
 .markdown-content :deep(p) {
   color: var(--color-neutral-950);
 }
@@ -112,7 +109,6 @@ const closeDevotional = () => {
 
 .markdown-content :deep(ul) {
   list-style-type: disc;
-  color: var(--color-fuchsia-950);
   margin-left: 1.125rem;
   display: flex;
   flex-direction: column;
@@ -121,14 +117,10 @@ const closeDevotional = () => {
 
 .markdown-content :deep(ol) {
   list-style-type: decimal;
-  color: var(--color-fuchsia-950);
   margin-left: 1.125rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.markdown-content :deep(li) {
 }
 
 .markdown-content :deep(hr) {

@@ -1,9 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { auth } from '@/firebase/config'
-import { onAuthStateChanged } from 'firebase/auth'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
-import AdminView from '@/views/AdminView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
