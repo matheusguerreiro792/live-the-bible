@@ -2,40 +2,57 @@
 import { ref } from 'vue'
 import { serverTimestamp } from 'firebase/firestore'
 import IconXmark from './icons/IconXmark.vue'
-import { postStudie } from '@/firebase/services/studies'
+import { postStudie, updateStudie } from '@/firebase/services/studies'
 import { useStudiesStore } from '@/stores/studies'
+import type { Studie } from '@/types'
 
-const devotionalStore = useStudiesStore()
+const props = defineProps<{
+  studie?: Studie | null
+}>()
 
-const newStudie = ref({
-  title: '',
-  theme: '',
-  content: '',
-  createdAt: null,
+const emit = defineEmits(['close', 'saved'])
+
+const studiesStore = useStudiesStore()
+
+const newStudie = ref<Studie>({
+  title: props.studie?.title || '',
+  theme: props.studie?.theme || '',
+  content: props.studie?.content || '',
+  createdAt: props.studie?.createdAt || null,
 })
 
 const handleSubmit = async () => {
   try {
-    const dataToSave = {
-      ...newStudie.value,
-      createdAt: serverTimestamp(),
+    if (props.studie?.id) {
+      await updateStudie(props.studie.id, {
+        ...newStudie.value,
+      })
+      alert('Estudo atualizado com sucesso!')
+    } else {
+      const dataToSave = {
+        ...newStudie.value,
+        createdAt: serverTimestamp(),
+      }
+
+      await postStudie(dataToSave)
+      alert('Estudo salvo com sucesso!')
     }
 
-    const savedStudie = await postStudie(dataToSave)
-    console.log('Estudo salvo com ID: ', savedStudie.id)
-    alert('Estudo salvo com sucesso!')
+    studiesStore.clearCache()
+    emit('saved')
+    emit('close')
 
-    devotionalStore.clearCache()
-
-    newStudie.value = {
-      title: '',
-      theme: '',
-      content: '',
-      createdAt: null,
+    if (!props.studie) {
+      newStudie.value = {
+        title: '',
+        theme: '',
+        content: '',
+        createdAt: null,
+      }
     }
   } catch (e) {
-    console.error('Erro ao adicionar devocional: ', e)
-    alert('Erro ao salvar devocional.')
+    console.error('Erro ao salvar estudo: ', e)
+    alert('Erro ao salvar estudo.')
   }
 }
 </script>
@@ -44,7 +61,9 @@ const handleSubmit = async () => {
   <div
     class="relative bg-neutral-800 p-4 rounded-lg shadow-md flex flex-col gap-4 w-3/4 items-center"
   >
-    <h2 class="font-semibold text-3xl text-fuchsia-400">New Studie</h2>
+    <h2 class="font-semibold text-3xl text-fuchsia-400">
+      {{ props.studie?.id ? 'Editar Estudo' : 'Novo Estudo' }}
+    </h2>
     <button
       @click="$emit('close')"
       class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-neutral-50 text-xs font-medium p-1 rounded"
@@ -91,7 +110,7 @@ const handleSubmit = async () => {
           type="submit"
           class="w-full inline-flex justify-center py-3 px-6 border border-transparent text-lg font-medium rounded-md text-neutral-50 bg-fuchsia-700 hover:bg-fuchsia-800"
         >
-          Save Studie
+          {{ props.studie?.id ? 'Atualizar Estudo' : 'Salvar Estudo' }}
         </button>
       </div>
     </form>

@@ -33,11 +33,11 @@ const closeDevotional = () => {
 <template>
   <div
     v-if="devotional"
-    class="fixed top-0 left-0 z-30 h-full bg-neutral-950/75 flex items-center justify-center pt-4 pb-7"
+    class="fixed top-0 left-0 z-30 h-full w-full bg-neutral-950/75 flex items-center justify-center pt-4 pb-7"
     @click.self="closeDevotional"
   >
     <div
-      class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-full max-w-4/5 h-full overflow-y-auto relative rounded-lg shadow-lg"
+      class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-full max-w-342 h-full overflow-y-auto relative rounded-lg shadow-lg"
     >
       <button
         @click="closeDevotional"

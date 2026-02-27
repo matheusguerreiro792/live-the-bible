@@ -116,7 +116,7 @@ onMounted(() => {
       <div
         v-for="devotional in devotionalStore.filteredDevotionals"
         :key="devotional.id"
-        class="p-4 w-fit border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden"
+        class="p-4 w-fit max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
         @click="handleDevotionalClick(devotional)"
       >
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ devotional.title }}</h2>

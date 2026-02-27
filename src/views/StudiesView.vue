@@ -117,14 +117,10 @@ onMounted(() => {
       <div
         v-for="studie in studiesStore.filteredStudies"
         :key="studie.id"
-        class="p-4 w-64 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
+        class="p-4 w-fit max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
         @click="handleStudieClick(studie)"
       >
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ studie.title }}</h2>
-
-        <p class="text-sm text-neutral-600 line-clamp-2">
-          Clique para ler o estudo completo sobre este tema.
-        </p>
 
         <div class="absolute bottom-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-tl-md">
           <span class="text-xs font-medium text-neutral-50">{{ studie.theme }}</span>

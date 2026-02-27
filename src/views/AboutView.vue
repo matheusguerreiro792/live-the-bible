@@ -2,7 +2,7 @@
 
 <template>
   <main class="flex flex-col flex-1 items-center py-14 px-21 bg-neutral-100">
-    <div class="w-full bg-white py-4 px-5 rounded-lg shadow-lg flex flex-col gap-4">
+    <div class="w-full max-w-342 bg-white py-4 px-5 rounded-lg shadow-lg flex flex-col gap-4">
       <h1 class="text-3xl font-bold text-fuchsia-950 text-center">Sobre o Viva a Bíblia</h1>
 
       <section class="flex flex-col gap-2">

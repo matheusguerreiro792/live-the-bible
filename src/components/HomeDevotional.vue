@@ -18,7 +18,7 @@ const renderedHtml = computed(() => {
 
 <template>
   <div
-    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full border border-neutral-100 overflow-hidden"
+    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full max-w-342 border border-neutral-100 overflow-hidden"
   >
     <div
       class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium"

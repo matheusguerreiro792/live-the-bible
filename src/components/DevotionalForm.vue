@@ -2,48 +2,66 @@
 import { ref } from 'vue'
 import { serverTimestamp } from 'firebase/firestore'
 import IconXmark from './icons/IconXmark.vue'
-import { postDevotional } from '@/firebase/services/devotionals'
+import { postDevotional, updateDevotional } from '@/firebase/services/devotionals'
 import { useDevotionalsStore } from '@/stores/devotionals'
+import type { Devotional } from '@/types'
+
+const props = defineProps<{
+  devotional?: Devotional | null
+}>()
+
+const emit = defineEmits(['close', 'saved'])
 
 const devotionalStore = useDevotionalsStore()
 
-const newDevotional = ref({
-  title: '',
+const newDevotional = ref<Devotional>({
+  title: props.devotional?.title || '',
   verse: {
-    verse: '',
+    verse: props.devotional?.verse?.verse || '',
     versions: {
-      arc: '',
-      nvi: '',
-      ntlh: '',
+      arc: props.devotional?.verse?.versions?.arc || '',
+      nvi: props.devotional?.verse?.versions?.nvi || '',
+      ntlh: props.devotional?.verse?.versions?.ntlh || '',
     },
   },
-  theme: '',
-  content: '',
-  createdAt: null,
+  theme: props.devotional?.theme || '',
+  content: props.devotional?.content || '',
+  createdAt: props.devotional?.createdAt || null,
 })
 
 const handleSubmit = async () => {
   try {
-    const dataToSave = {
-      ...newDevotional.value,
-      createdAt: serverTimestamp(),
-    }
+    if (props.devotional?.id) {
+      await updateDevotional(props.devotional.id, {
+        ...newDevotional.value,
+      })
+      alert('Devocional atualizado com sucesso!')
+    } else {
+      const dataToSave = {
+        ...newDevotional.value,
+        createdAt: serverTimestamp(),
+      }
 
-    const savedDevotional = await postDevotional(dataToSave)
-    console.log('Devocional salvo com ID: ', savedDevotional.id)
-    alert('Devocional salvo com sucesso!')
+      const savedDevotional = await postDevotional(dataToSave)
+      console.log('Devocional salvo com ID: ', savedDevotional.id)
+      alert('Devocional salvo com sucesso!')
+    }
 
     devotionalStore.clearCache()
+    emit('saved')
+    emit('close')
 
-    newDevotional.value = {
-      title: '',
-      verse: { verse: '', versions: { arc: '', nvi: '', ntlh: '' } },
-      theme: '',
-      content: '',
-      createdAt: null,
+    if (!props.devotional) {
+      newDevotional.value = {
+        title: '',
+        verse: { verse: '', versions: { arc: '', nvi: '', ntlh: '' } },
+        theme: '',
+        content: '',
+        createdAt: null,
+      }
     }
   } catch (e) {
-    console.error('Erro ao adicionar devocional: ', e)
+    console.error('Erro ao salvar devocional: ', e)
     alert('Erro ao salvar devocional.')
   }
 }
@@ -51,9 +69,11 @@ const handleSubmit = async () => {
 
 <template>
   <div
-    class="relative bg-neutral-800 p-4 rounded-lg shadow-md flex flex-col gap-4 w-3/4 items-center"
+    class="relative bg-neutral-800 p-4 rounded-lg shadow-md flex flex-col gap-4 w-3/4 h-full items-center overflow-y-auto"
   >
-    <h2 class="font-semibold text-3xl text-fuchsia-400">New Devotional</h2>
+    <h2 class="font-semibold text-3xl text-fuchsia-400">
+      {{ props.devotional?.id ? 'Editar Devocional' : 'Novo Devocional' }}
+    </h2>
     <button
       @click="$emit('close')"
       class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-neutral-50 text-xs font-medium p-1 rounded"
@@ -147,7 +167,7 @@ const handleSubmit = async () => {
           type="submit"
           class="w-full inline-flex justify-center py-3 px-6 border border-transparent text-lg font-medium rounded-md text-neutral-50 bg-fuchsia-700 hover:bg-fuchsia-800"
         >
-          Save Devotional
+          {{ props.devotional?.id ? 'Atualizar Devocional' : 'Salvar Devocional' }}
         </button>
       </div>
     </form>
