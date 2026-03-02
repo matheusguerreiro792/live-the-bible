@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getLatestDevotional, getDevotionals } from '@/firebase/services/devotionals'
+import { getLastUpdate } from '@/firebase/services/sync'
 
 interface Devotional {
   id?: string
@@ -30,6 +31,7 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
   const LATEST_DEVOTIONAL_LAST_FETCH_DATE_KEY = 'latestDevotionalLastFetchDate'
   const ALL_DEVOTIONALS_CACHE_KEY = 'allDevotionalsCache'
   const ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY = 'allDevotionalsLastFetchDate'
+  const GLOBAL_LAST_UPDATE_KEY = 'globalLastUpdate'
 
   const isToday = (dateString: string): boolean => {
     const today = new Date()
@@ -41,15 +43,33 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     )
   }
 
+  const checkSync = async () => {
+    const serverTimestamp = await getLastUpdate()
+    if (!serverTimestamp) return true
+
+    const localTimestamp = localStorage.getItem(GLOBAL_LAST_UPDATE_KEY)
+    const serverTimeStr = serverTimestamp.toDate ? serverTimestamp.toDate().toISOString() : null
+
+    if (serverTimeStr !== localTimestamp) {
+      console.log('Novos dados detectados no servidor. Limpando cache local...')
+      clearCache()
+      if (serverTimeStr) localStorage.setItem(GLOBAL_LAST_UPDATE_KEY, serverTimeStr)
+      return false
+    }
+    return true
+  }
+
   const fetchLatestDevotional = async () => {
     isLoading.value = true
     error.value = null
 
     try {
+      const isCacheValid = await checkSync()
+
       const cachedData = localStorage.getItem(LATEST_DEVOTIONAL_CACHE_KEY)
       const lastFetchDate = localStorage.getItem(LATEST_DEVOTIONAL_LAST_FETCH_DATE_KEY)
 
-      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+      if (isCacheValid && cachedData && lastFetchDate && isToday(lastFetchDate)) {
         latestDevotional.value = JSON.parse(cachedData) as Devotional
         console.log('Devocional mais recente carregado do cache local.')
         return
@@ -85,10 +105,12 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     error.value = null
 
     try {
+      const isCacheValid = await checkSync()
+
       const cachedData = localStorage.getItem(ALL_DEVOTIONALS_CACHE_KEY)
       const lastFetchDate = localStorage.getItem(ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY)
 
-      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+      if (isCacheValid && cachedData && lastFetchDate && isToday(lastFetchDate)) {
         allDevotionals.value = JSON.parse(cachedData) as Devotional[]
         console.log('Lista de devocionais carregada do cache local.')
         return
@@ -137,6 +159,8 @@ export const useDevotionalsStore = defineStore('devotionals', () => {
     localStorage.removeItem(ALL_DEVOTIONALS_LAST_FETCH_DATE_KEY)
     allDevotionals.value = []
     selectedTheme.value = null
+
+    localStorage.removeItem(GLOBAL_LAST_UPDATE_KEY)
 
     console.log('Cache de devocionais limpo.')
   }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getLatestStudie, getStudies } from '@/firebase/services/studies'
+import { getLastUpdate } from '@/firebase/services/sync'
 
 interface Studie {
   id?: string
@@ -22,6 +23,7 @@ export const useStudiesStore = defineStore('studies', () => {
   const LATEST_STUDIE_LAST_FETCH_DATE_KEY = 'latestStudieLastFetchDate'
   const ALL_STUDIES_CACHE_KEY = 'allStudiesCache'
   const ALL_STUDIES_LAST_FETCH_DATE_KEY = 'allStudiesLastFetchDate'
+  const GLOBAL_LAST_UPDATE_KEY = 'globalLastUpdate'
 
   const isToday = (dateString: string): boolean => {
     const today = new Date()
@@ -33,15 +35,33 @@ export const useStudiesStore = defineStore('studies', () => {
     )
   }
 
+  const checkSync = async () => {
+    const serverTimestamp = await getLastUpdate()
+    if (!serverTimestamp) return true
+
+    const localTimestamp = localStorage.getItem(GLOBAL_LAST_UPDATE_KEY)
+    const serverTimeStr = serverTimestamp.toDate ? serverTimestamp.toDate().toISOString() : null
+
+    if (serverTimeStr !== localTimestamp) {
+      console.log('Novos dados detectados no servidor. Limpando cache local de estudos...')
+      clearCache()
+      if (serverTimeStr) localStorage.setItem(GLOBAL_LAST_UPDATE_KEY, serverTimeStr)
+      return false
+    }
+    return true
+  }
+
   const fetchLatestStudie = async () => {
     isLoading.value = true
     error.value = null
 
     try {
+      const isCacheValid = await checkSync()
+
       const cachedData = localStorage.getItem(LATEST_STUDIE_CACHE_KEY)
       const lastFetchDate = localStorage.getItem(LATEST_STUDIE_LAST_FETCH_DATE_KEY)
 
-      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+      if (isCacheValid && cachedData && lastFetchDate && isToday(lastFetchDate)) {
         latestStudie.value = JSON.parse(cachedData) as Studie
         console.log('Estudo mais recente carregado do cache local.')
         return
@@ -77,10 +97,12 @@ export const useStudiesStore = defineStore('studies', () => {
     error.value = null
 
     try {
+      const isCacheValid = await checkSync()
+
       const cachedData = localStorage.getItem(ALL_STUDIES_CACHE_KEY)
       const lastFetchDate = localStorage.getItem(ALL_STUDIES_LAST_FETCH_DATE_KEY)
 
-      if (cachedData && lastFetchDate && isToday(lastFetchDate)) {
+      if (isCacheValid && cachedData && lastFetchDate && isToday(lastFetchDate)) {
         allStudies.value = JSON.parse(cachedData) as Studie[]
         console.log('Lista de estudos carregada do cache local.')
         return
@@ -129,6 +151,8 @@ export const useStudiesStore = defineStore('studies', () => {
     localStorage.removeItem(ALL_STUDIES_LAST_FETCH_DATE_KEY)
     allStudies.value = []
     selectedTheme.value = null
+
+    localStorage.removeItem(GLOBAL_LAST_UPDATE_KEY)
 
     console.log('Cache de estudos limpo.')
   }

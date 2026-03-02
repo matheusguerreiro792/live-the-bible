@@ -11,6 +11,7 @@ import {
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore'
+import { notifyUpdate } from './sync'
 
 export const getStudies = async () => {
   try {
@@ -67,6 +68,7 @@ export const postStudie = async (studie) => {
   try {
     const studiesRef = collection(db, 'studies')
     const docRef = await addDoc(studiesRef, studie)
+    await notifyUpdate()
     return { id: docRef.id, ...studie }
   } catch (error) {
     console.error('Erro ao adicionar estudo:', error)
@@ -78,6 +80,7 @@ export const updateStudie = async (id, updatedData) => {
   try {
     const docRef = doc(db, 'studies', id)
     await updateDoc(docRef, updatedData)
+    await notifyUpdate()
     return { id, ...updatedData }
   } catch (error) {
     console.error('Erro ao atualizar estudo:', error)
@@ -89,6 +92,7 @@ export const deleteStudie = async (id) => {
   try {
     const docRef = doc(db, 'studies', id)
     await deleteDoc(docRef)
+    await notifyUpdate()
   } catch (error) {
     console.error('Erro ao deletar estudo:', error)
     throw error

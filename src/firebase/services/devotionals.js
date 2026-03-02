@@ -11,6 +11,7 @@ import {
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore'
+import { notifyUpdate } from './sync'
 
 export const getDevotionals = async () => {
   try {
@@ -67,6 +68,7 @@ export const postDevotional = async (devotional) => {
   try {
     const devotionalsRef = collection(db, 'devotionals')
     const docRef = await addDoc(devotionalsRef, devotional)
+    await notifyUpdate()
     return { id: docRef.id, ...devotional }
   } catch (error) {
     console.error('Erro ao adicionar devocional:', error)
@@ -78,6 +80,7 @@ export const updateDevotional = async (id, updatedData) => {
   try {
     const docRef = doc(db, 'devotionals', id)
     await updateDoc(docRef, updatedData)
+    await notifyUpdate()
     return { id, ...updatedData }
   } catch (error) {
     console.error('Erro ao atualizar devocional:', error)
@@ -89,6 +92,7 @@ export const deleteDevotional = async (id) => {
   try {
     const docRef = doc(db, 'devotionals', id)
     await deleteDoc(docRef)
+    await notifyUpdate()
   } catch (error) {
     console.error('Erro ao deletar devocional:', error)
     throw error
