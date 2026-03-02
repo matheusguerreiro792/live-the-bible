@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { marked } from 'marked'
 import IconXmark from './icons/IconXmark.vue'
+import BackToTop from './BackToTop.vue'
 
 const props = defineProps<{
   devotional: {
@@ -20,6 +21,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['close'])
+const scrollContainer = ref<HTMLElement | null>(null)
 
 const renderedHtml = computed(() => {
   return marked(props.devotional?.content || '')
@@ -31,49 +33,36 @@ const closeDevotional = () => {
 </script>
 
 <template>
-  <div
-    v-if="devotional"
-    class="fixed top-0 left-0 z-30 h-full w-full bg-neutral-950/75 flex items-center justify-center pt-4 pb-7"
-    @click.self="closeDevotional"
-  >
-    <div
-      class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-full max-w-342 h-full overflow-y-auto relative rounded-lg shadow-lg"
-    >
-      <button
-        @click="closeDevotional"
-        class="absolute top-1 right-5 bg-red-700 hover:bg-red-800 text-neutral-50 rounded-full flex items-center justify-center w-5 h-5 transition-colors z-10"
-        aria-label="Fechar devocional"
-      >
-        <IconXmark color="currentColor" class="w-3 h-3" />
+  <div v-if="devotional"
+    class="fixed top-0 left-0 z-30 h-full w-full bg-neutral-950/75 flex items-center justify-center p-0"
+    @click.self="closeDevotional">
+    <div ref="scrollContainer"
+      class="bg-neutral-50 py-4 px-5 gap-4 flex flex-col w-full max-w-342 h-full overflow-y-auto relative rounded-lg shadow-lg">
+      <button @click="closeDevotional"
+        class="absolute top-1 right-1 bg-red-700 hover:bg-red-800 text-neutral-50 rounded-full flex items-center justify-center w-8 h-8 transition-colors z-10"
+        aria-label="Fechar devocional">
+        <IconXmark color="currentColor" class="w-4 h-4" />
       </button>
 
       <div class="flex flex-col gap-4">
-        <div
-          class="absolute top-0 right-14 bg-fuchsia-900 py-1 px-2 rounded-b-md text-neutral-50 text-xs font-medium"
-        >
+        <div class="absolute top-0 right-10 bg-fuchsia-900 py-1 px-2 rounded-b-md text-neutral-50 text-xs font-medium">
           {{ devotional.theme }}
         </div>
 
-        <h2 class="font-semibold text-3xl text-fuchsia-950">{{ devotional.title }}</h2>
+        <h2 class="font-semibold text-3xl mt-5 text-fuchsia-950">{{ devotional.title }}</h2>
 
         <div
-          class="bg-fuchsia-100 border-l-4 border-fuchsia-900 font-bold px-3 py-2 text-lg rounded-r-md text-fuchsia-950"
-        >
+          class="bg-fuchsia-100 border-l-4 border-fuchsia-900 font-bold px-3 py-2 text-lg rounded-r-md text-fuchsia-950">
           {{ devotional.verse.verse }}
         </div>
 
-        <ul
-          class="flex flex-col gap-2 bg-fuchsia-50 py-2 px-4 rounded-md border border-fuchsia-100"
-        >
-          <li
-            v-for="(versionText, version) in devotional.verse.versions"
-            :key="version"
-            class="flex items-center gap-2"
-          >
-            <h3 class="font-bold text-fuchsia-900 w-9.5 text-xs uppercase">
+        <ul class="flex flex-col gap-2 bg-fuchsia-50 py-2 px-4 rounded-md border border-fuchsia-100">
+          <li v-for="(versionText, version) in devotional.verse.versions" :key="version"
+            class="flex items-center gap-2">
+            <h3 class="font-bold text-fuchsia-900 w-9.5 min-w-9.5 text-xs uppercase">
               {{ version }}
             </h3>
-            <p class="text-fuchsia-950 font-medium">{{ versionText }}</p>
+            <p class="text-fuchsia-950 font-medium flex flex-wrap">{{ versionText }}</p>
           </li>
         </ul>
 
@@ -81,6 +70,7 @@ const closeDevotional = () => {
 
         <div class="markdown-content text-justify flex flex-col gap-4" v-html="renderedHtml"></div>
       </div>
+      <BackToTop :container="scrollContainer" />
     </div>
   </div>
 </template>

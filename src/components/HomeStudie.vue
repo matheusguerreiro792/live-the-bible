@@ -25,7 +25,7 @@ const renderedHtml = computed(() => {
       {{ studie.theme }}
     </div>
 
-    <h2 class="font-semibold text-3xl text-fuchsia-950">{{ studie.title }}</h2>
+    <h2 class="font-semibold text-3xl text-fuchsia-950 w-11/12">{{ studie.title }}</h2>
 
     <hr class="text-fuchsia-900 mt-2" />
 

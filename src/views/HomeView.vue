@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import HomeDevotional from '@/components/HomeDevotional.vue'
 import HomeStudie from '@/components/HomeStudie.vue'
+import BackToTop from '@/components/BackToTop.vue'
 import { useDevotionalsStore } from '@/stores/devotionals'
 import { useStudiesStore } from '@/stores/studies'
 
@@ -15,7 +16,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <main className="flex flex-col bg-neutral-200 flex-1 items-center gap-8 py-8 px-21">
+  <main
+    className="flex flex-col bg-neutral-200 flex-1 items-center gap-4 py-4 sm:gap-6 sm:py-6 sm:px-14 md:px-21 md:gap-8 md:py-8 max-sm:px-4"
+  >
     <h2
       class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
     >
@@ -35,8 +38,9 @@ onMounted(() => {
       :devotional="devotionalsStore.latestDevotional"
     />
     <div v-else class="text-neutral-950 text-lg">Nenhum Devocional disponível no momento.</div>
+    <hr class="w-screen text-fuchsia-900 mt-1 border" />
     <h2
-      class="text-2xl font-medium p-1 -mb-4 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
+      class="text-2xl font-medium p-1 text-neutral-50 rounded-lg bg-[linear-gradient(to_right,var(--color-fuchsia-900),var(--color-fuchsia-800),var(--color-fuchsia-800),var(--color-fuchsia-900))] flex justify-center w-full shadow"
     >
       Estudo
     </h2>
@@ -52,4 +56,5 @@ onMounted(() => {
     <HomeStudie v-else-if="studiesStore.latestStudie" :studie="studiesStore.latestStudie" />
     <div v-else class="text-neutral-950 text-lg">Nenhum Estudo disponível no momento.</div>
   </main>
+  <BackToTop />
 </template>

@@ -80,21 +80,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex flex-col flex-1 px-21 gap-4 py-8 relative bg-neutral-100">
-    <div v-if="devotionalThemesWithColors.length > 0" class="flex gap-2 flex-wrap">
+  <main class="flex flex-col flex-1 gap-8 p-4 max-sm:px-4 md:px-20 md:py-8 relative bg-neutral-100">
+    <div v-if="devotionalThemesWithColors.length > 0" class="flex gap-4 md:gap-2 flex-wrap">
       <div v-for="item in devotionalThemesWithColors" :key="item.theme">
-        <button
-          @click="handleThemeFilter(item.theme)"
-          :class="[
-            'flex py-1 px-2 rounded-lg font-medium cursor-pointer text-neutral-50 w-fit shadow text-sm',
-            item.color,
-            {
-              'ring-2 ring-offset-2 ring-fuchsia-900':
-                devotionalStore.selectedTheme === item.theme ||
-                (item.theme === 'Todos os Temas' && !devotionalStore.selectedTheme),
-            },
-          ]"
-        >
+        <button @click="handleThemeFilter(item.theme)" :class="[
+          'flex py-1 px-2 rounded-lg font-medium cursor-pointer text-neutral-50 w-fit shadow text-sm',
+          item.color,
+          {
+            'ring-2 ring-offset-2 ring-fuchsia-900':
+              devotionalStore.selectedTheme === item.theme ||
+              (item.theme === 'Todos os Temas' && !devotionalStore.selectedTheme),
+          },
+        ]">
           {{ item.theme }}
         </button>
       </div>
@@ -103,27 +100,17 @@ onMounted(() => {
     <div v-if="devotionalStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
       Carregando devocionais...
     </div>
-    <div
-      v-else-if="devotionalStore.error"
-      class="text-red-600 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
-    >
+    <div v-else-if="devotionalStore.error" class="text-red-600 py-1 px-2 bg-red-50 border border-red-600 rounded-md">
       {{ devotionalStore.error }}
     </div>
-    <div
-      v-else-if="devotionalStore.filteredDevotionals.length > 0"
-      class="flex flex-wrap gap-4 mt-4"
-    >
-      <div
-        v-for="devotional in devotionalStore.filteredDevotionals"
-        :key="devotional.id"
-        class="p-4 w-fit max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
-        @click="handleDevotionalClick(devotional)"
-      >
+    <div v-else-if="devotionalStore.filteredDevotionals.length > 0" class="flex flex-wrap gap-4">
+      <div v-for="devotional in devotionalStore.filteredDevotionals" :key="devotional.id"
+        class="p-4 w-full xl:w-fit xl:max-w-1/3 2xl:max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
+        @click="handleDevotionalClick(devotional)">
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ devotional.title }}</h2>
         <strong
-          class="bg-fuchsia-50 border border-fuchsia-900 w-fit text-fuchsia-950 rounded-md px-2 py-0.5 flex items-center"
-          >{{ devotional.verse.verse }}</strong
-        >
+          class="bg-fuchsia-50 border border-fuchsia-900 w-fit text-fuchsia-950 rounded-md px-2 py-0.5 flex items-center">{{
+            devotional.verse.verse }}</strong>
         <div class="absolute bottom-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-tl-md">
           <span class="text-xs font-medium text-neutral-50">{{ devotional.theme }}</span>
         </div>
@@ -133,10 +120,7 @@ onMounted(() => {
       Nenhum devocional disponível para o tema selecionado.
     </div>
 
-    <DevotionalsDevotional
-      v-if="selectedDevotional"
-      :devotional="selectedDevotional"
-      @close="closeSelectedDevotional"
-    />
+    <DevotionalsDevotional v-if="selectedDevotional" :devotional="selectedDevotional"
+      @close="closeSelectedDevotional" />
   </main>
 </template>

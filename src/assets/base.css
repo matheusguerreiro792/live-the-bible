@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+@theme {
+  --breakpoint-320: 20.125rem;
+  --breakpoint-360: 22.625rem;
+  --breakpoint-425: 26.625rem;
+  --breakpoint-1368: 85.5rem;
+  --breakpoint-1440: 90rem;
+  --breakpoint-1600: 100rem;
+  --breakpoint-1920: 120rem;
+}
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: var(--color-neutral-50);

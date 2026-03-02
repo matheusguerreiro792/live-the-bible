@@ -41,9 +41,7 @@ const studieThemesWithColors = computed(() => {
     return []
   }
 
-  const themes = Array.from(
-    new Set(studiesStore.allStudies.map((studie) => studie.theme)),
-  )
+  const themes = Array.from(new Set(studiesStore.allStudies.map((studie) => studie.theme)))
 
   const allThemes = [
     { theme: 'Todos os Temas', color: 'bg-fuchsia-900 hover:bg-fuchsia-950 active:bg-fuchsia-800' },
@@ -80,21 +78,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex flex-col flex-1 px-21 gap-4 py-8 relative bg-neutral-100">
-    <div v-if="studieThemesWithColors.length > 0" class="flex gap-2 flex-wrap">
+  <main class="flex flex-col flex-1 gap-8 p-4 max-sm:px-4 md:px-20 md:py-8 relative bg-neutral-100">
+    <div v-if="studieThemesWithColors.length > 0" class="flex gap-4 md:gap-2 flex-wrap">
       <div v-for="item in studieThemesWithColors" :key="item.theme">
-        <button
-          @click="handleThemeFilter(item.theme)"
-          :class="[
-            'flex py-1 px-2 rounded-lg font-medium cursor-pointer text-neutral-50 w-fit shadow text-sm transition-all',
-            item.color,
-            {
-              'ring-2 ring-offset-2 ring-fuchsia-900':
-                studiesStore.selectedTheme === item.theme ||
-                (item.theme === 'Todos os Temas' && !studiesStore.selectedTheme),
-            },
-          ]"
-        >
+        <button @click="handleThemeFilter(item.theme)" :class="[
+          'flex py-1 px-2 rounded-lg font-medium cursor-pointer text-neutral-50 w-fit shadow text-sm transition-all',
+          item.color,
+          {
+            'ring-2 ring-offset-2 ring-fuchsia-900':
+              studiesStore.selectedTheme === item.theme ||
+              (item.theme === 'Todos os Temas' && !studiesStore.selectedTheme),
+          },
+        ]">
           {{ item.theme }}
         </button>
       </div>
@@ -103,23 +98,14 @@ onMounted(() => {
     <div v-if="studiesStore.isLoading" class="text-fuchsia-900 text-lg font-semibold">
       Carregando estudos...
     </div>
-    <div
-      v-else-if="studiesStore.error"
-      class="text-red-600 py-1 px-2 bg-red-50 border border-red-600 rounded-md"
-    >
+    <div v-else-if="studiesStore.error" class="text-red-600 py-1 px-2 bg-red-50 border border-red-600 rounded-md">
       {{ studiesStore.error }}
     </div>
 
-    <div
-      v-else-if="studiesStore.filteredStudies.length > 0"
-      class="flex flex-wrap gap-4 mt-4"
-    >
-      <div
-        v-for="studie in studiesStore.filteredStudies"
-        :key="studie.id"
-        class="p-4 w-fit max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
-        @click="handleStudieClick(studie)"
-      >
+    <div v-else-if="studiesStore.filteredStudies.length > 0" class="flex flex-wrap gap-4">
+      <div v-for="studie in studiesStore.filteredStudies" :key="studie.id"
+        class="p-4 w-full xl:w-fit xl:max-w-1/3 2xl:max-w-1/4 border border-fuchsia-950 rounded-lg shadow-md bg-white flex flex-col gap-2 cursor-pointer hover:bg-fuchsia-100 active:bg-fuchsia-50 relative overflow-hidden transition-colors"
+        @click="handleStudieClick(studie)">
         <h2 class="text-xl -mt-1.5 font-semibold text-fuchsia-950">{{ studie.title }}</h2>
 
         <div class="absolute bottom-0 right-0 bg-fuchsia-900 flex py-0.5 px-1 rounded-tl-md">
@@ -133,10 +119,6 @@ onMounted(() => {
     </div>
 
     <!-- Modal de Detalhe -->
-    <StudiesStudie
-      v-if="selectedStudie"
-      :studie="selectedStudie"
-      @close="closeSelectedStudie"
-    />
+    <StudiesStudie v-if="selectedStudie" :studie="selectedStudie" @close="closeSelectedStudie" />
   </main>
 </template>
