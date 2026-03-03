@@ -24,22 +24,23 @@ const newStudie = ref<Studie>({
 
 const handleSubmit = async () => {
   try {
-    const dataToFormat = {
+    const isEdit = !!props.studie?.id
+    const dataToSave = {
       ...newStudie.value,
-      title: formatTitle(newStudie.value.title),
-      theme: formatTheme(newStudie.value.theme),
+      title: isEdit ? newStudie.value.title : formatTitle(newStudie.value.title),
+      theme: isEdit ? newStudie.value.theme : formatTheme(newStudie.value.theme),
     }
 
-    if (props.studie?.id) {
-      await updateStudie(props.studie.id, dataToFormat)
+    if (isEdit) {
+      await updateStudie(props.studie!.id!, dataToSave)
       alert('Estudo atualizado com sucesso!')
     } else {
-      const dataToSave = {
-        ...dataToFormat,
+      const dataToCreate = {
+        ...dataToSave,
         createdAt: serverTimestamp(),
       }
 
-      await postStudie(dataToSave)
+      await postStudie(dataToCreate)
       alert('Estudo salvo com sucesso!')
     }
 

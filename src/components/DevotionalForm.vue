@@ -32,22 +32,23 @@ const newDevotional = ref<Devotional>({
 
 const handleSubmit = async () => {
   try {
-    const dataToFormat = {
+    const isEdit = !!props.devotional?.id
+    const dataToSave = {
       ...newDevotional.value,
-      title: formatTitle(newDevotional.value.title),
-      theme: formatTheme(newDevotional.value.theme),
+      title: isEdit ? newDevotional.value.title : formatTitle(newDevotional.value.title),
+      theme: isEdit ? newDevotional.value.theme : formatTheme(newDevotional.value.theme),
     }
 
-    if (props.devotional?.id) {
-      await updateDevotional(props.devotional.id, dataToFormat)
+    if (isEdit) {
+      await updateDevotional(props.devotional!.id!, dataToSave)
       alert('Devocional atualizado com sucesso!')
     } else {
-      const dataToSave = {
-        ...dataToFormat,
+      const dataToCreate = {
+        ...dataToSave,
         createdAt: serverTimestamp(),
       }
 
-      const savedDevotional = await postDevotional(dataToSave)
+      const savedDevotional = await postDevotional(dataToCreate)
       console.log('Devocional salvo com ID: ', savedDevotional.id)
       alert('Devocional salvo com sucesso!')
     }
