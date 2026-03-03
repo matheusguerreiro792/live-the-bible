@@ -22,9 +22,8 @@
         <h2 class="text-xl font-semibold text-fuchsia-900">Nossa Missão e Visão</h2>
         <p class="text-neutral-950 leading-relaxed text-justify">
           Nossa missão é clara:
-          <strong class="text-fuchsia-900"
-            >transformar vidas através do conhecimento e da prática da Bíblia Sagrada</strong
-          >. Visualizamos um mundo onde a sabedoria milenar das escrituras se torna acessível,
+          <strong class="text-fuchsia-900">transformar vidas através do conhecimento e da prática da Bíblia
+            Sagrada</strong>. Visualizamos um mundo onde a sabedoria milenar das escrituras se torna acessível,
           relevante e aplicável para os desafios contemporâneos. Queremos que cada pessoa encontre
           no <strong class="text-fuchsia-900">"Viva a Bíblia"</strong> uma fonte inesgotável de
           inspiração, crescimento e direção divina.
@@ -85,14 +84,20 @@
             futuramente, ferramentas interativas baseadas em IA.
           </li>
           <li>
-            <strong class="text-fuchsia-900">Canal no YouTube:</strong>
+            <a href="https://www.youtube.com/@VivaaB%C3%ADblia-vab7" target="_blank"
+              class="text-blue-700 text-lg font-bold hover:underline hover:underline-offset-2">Viva
+              a
+              Bíblia</a>
+            <span class="text-fuchsia-900 font-semibold"> (canal no <strong
+                class="text-fuchsia-900 font-bold">YouTube</strong>):</span>
             Conteúdo audiovisual dinâmico, utilizando narração e recursos visuais para vídeos
             educativos e inspiradores.
           </li>
-          <li>
+          <li class="">
             <strong class="text-fuchsia-900">Perfil no Instagram:</strong> Apresenta o mesmo
             conteúdo de forma concisa e visualmente atraente, com citações impactantes e insights
-            rápidos.
+            rápidos. <span class="bg-fuchsia-950 text-yellow-200 rounded-md py-1 px-2 w-fit text-xs font-medium">em
+              breve</span>
           </li>
         </ul>
       </section>
@@ -112,9 +117,10 @@
       </section>
 
       <section class="flex flex-col gap-2 border-t border-fuchsia-900 pt-4 text-center">
-        <p class="text-neutral-950 text-lg font-medium">
+        <p class="text-neutral-950 text-lg font-medium flex flex-col gap-1">
           Junte-se a nós nesta jornada de fé, conhecimento e transformação.
-          <strong class="text-fuchsia-900">Viva a Bíblia!</strong>
+          <br />
+          <strong class="text-fuchsia-900 text-xl">Viva a Bíblia!</strong>
         </p>
       </section>
     </div>
