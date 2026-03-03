@@ -37,6 +37,21 @@ const router = createRouter({
       name: 'sobre',
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/contato',
+      name: 'contato',
+      component: () => import('../views/ContactView.vue'),
+    },
+    {
+      path: '/politica-de-privacidade',
+      name: 'politica-de-privacidade',
+      component: () => import('../views/PrivacyPolicyView.vue'),
+    },
+    {
+      path: '/termos-de-uso',
+      name: 'termos-de-uso',
+      component: () => import('../views/TermsOfUseView.vue'),
+    },
   ],
 })
 

@@ -54,7 +54,7 @@ watch(
 <template>
   <Transition name="fade">
     <button v-if="isVisible" @click="scrollToTop"
-      class="fixed bottom-2 right-2 1440:right-12 1600:right-34 1920:right-74 z-50 bg-fuchsia-900 hover:bg-fuchsia-800 text-neutral-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
+      class="fixed bottom-2 right-2 1440:right-12 1600:right-34 1920:right-74 z-50 bg-fuchsia-900 hover:bg-fuchsia-950 text-neutral-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
       aria-label="Voltar para o topo">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
         class="w-6 h-6">
