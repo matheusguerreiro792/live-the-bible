@@ -88,8 +88,8 @@ const handleSubmit = async () => {
 
       <div class="border-t border-fuchsia-500 pt-4 flex flex-col gap-4">
         <h3 class="text-lg font-semibold text-fuchsia-400">Studie Content (Markdown)</h3>
-        <textarea v-model="newStudie.content" rows="32"
-          class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50 font-mono"
+        <textarea v-model="newStudie.content" rows="20"
+          class="w-full rounded-md py-4 px-5 bg-neutral-900 text-neutral-50 font-mono"
           placeholder="Use Markdown para formatar: # Título, **Negrito**, etc." required></textarea>
       </div>
 
