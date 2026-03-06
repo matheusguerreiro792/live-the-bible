@@ -75,6 +75,16 @@ const closeStudie = () => {
   font-weight: 700;
 }
 
+.markdown-content :deep(em) {
+  color: var(--color-fuchsia-950);
+  background-color: var(--color-fuchsia-50);
+  border: 0.063rem solid var(--color-fuchsia-100);
+  border-left: 0.25rem solid var(--color-fuchsia-900);
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
 .markdown-content :deep(ul) {
   list-style-type: disc;
   margin-left: 1.125rem;

@@ -59,8 +59,6 @@ const renderedHtml = computed(() => {
   font-size: 1.125rem;
 }
 
-.markdown-content :deep(h4) {}
-
 .markdown-content :deep(p) {
   color: var(--color-neutral-950);
 }

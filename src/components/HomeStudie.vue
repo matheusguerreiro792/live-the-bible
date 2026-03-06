@@ -17,11 +17,8 @@ const renderedHtml = computed(() => {
 
 <template>
   <div
-    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full max-w-342 border border-neutral-100 overflow-hidden"
-  >
-    <div
-      class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium"
-    >
+    class="relative bg-neutral-50 py-4 px-5 rounded-lg shadow-md flex flex-col gap-4 w-full max-w-342 border border-neutral-100 overflow-hidden">
+    <div class="absolute top-0 right-0 bg-fuchsia-900 py-1 px-2 rounded-bl-md text-neutral-50 text-xs font-medium">
       {{ studie.theme }}
     </div>
 
@@ -55,6 +52,16 @@ const renderedHtml = computed(() => {
   font-weight: 700;
 }
 
+.markdown-content :deep(em) {
+  color: var(--color-fuchsia-950);
+  background-color: var(--color-fuchsia-50);
+  border: 0.063rem solid var(--color-fuchsia-100);
+  border-left: 0.25rem solid var(--color-fuchsia-900);
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
 .markdown-content :deep(ul) {
   list-style-type: disc;
   margin-left: 1.125rem;
@@ -79,7 +86,7 @@ const renderedHtml = computed(() => {
 .markdown-content :deep(blockquote) {
   background-color: var(--color-yellow-50);
   border: 1px solid var(--color-yellow-200);
-  border-left: 4px solid var(--color-yellow-400);
+  border-left: 0.25rem solid var(--color-yellow-400);
   padding: 0.25rem 0.63rem;
   font-style: italic;
   border-radius: 0 0.25rem 0.25rem 0;
