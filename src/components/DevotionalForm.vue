@@ -125,7 +125,7 @@ const handleSubmit = async () => {
 
       <div class="border-t border-fuchsia-500 pt-4 flex flex-col gap-4">
         <h3 class="text-lg font-semibold text-fuchsia-400">Devotional Content (Markdown)</h3>
-        <textarea v-model="newDevotional.content" rows="15"
+        <textarea v-model="newDevotional.content" rows="32"
           class="w-full rounded-md py-2 px-3 bg-neutral-900 text-neutral-50 font-mono"
           placeholder="Use Markdown para formatar: # Título, **Negrito**, etc." required></textarea>
       </div>
