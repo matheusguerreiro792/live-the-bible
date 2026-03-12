@@ -4,10 +4,12 @@ import DevotionalForm from '@/components/DevotionalForm.vue'
 import StudiesForm from '@/components/StudiesForm.vue'
 import { getDevotionals, deleteDevotional } from '@/firebase/services/devotionals'
 import { getStudies, deleteStudie } from '@/firebase/services/studies'
+import { getVisitCount } from '@/firebase/services/analytics'
 import type { Devotional, Studie } from '@/types'
 
 const devotionals = ref<Devotional[]>([])
 const studies = ref<Studie[]>([])
+const visitCount = ref(0)
 
 const showDevotionalForm = ref(false)
 const showStudyForm = ref(false)
@@ -18,6 +20,7 @@ const fetchData = async () => {
   try {
     devotionals.value = await getDevotionals()
     studies.value = await getStudies()
+    visitCount.value = await getVisitCount()
   } catch (error) {
     console.error('Erro ao buscar dados:', error)
   }
@@ -63,6 +66,21 @@ const handleDeleteStudy = async (id: string | undefined) => {
 <template>
   <main class="flex flex-col flex-1 bg-neutral-900 text-neutral-50 gap-4 p-4 items-center w-full max-w-342 mx-auto">
     <h1 class="text-4xl font-semibold text-yellow-400 w-full mb-1">Administração</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+      <div class="bg-neutral-800 p-4 rounded-xl border border-neutral-700 shadow-lg flex flex-col items-center">
+        <span class="text-neutral-400 text-sm font-medium uppercase tracking-wider">Total de Visitas</span>
+        <span class="text-3xl font-bold text-yellow-400">{{ visitCount }}</span>
+      </div>
+      <div class="bg-neutral-800 p-4 rounded-xl border border-neutral-700 shadow-lg flex flex-col items-center">
+        <span class="text-neutral-400 text-sm font-medium uppercase tracking-wider">Devocionais</span>
+        <span class="text-3xl font-bold text-fuchsia-400">{{ devotionals.length }}</span>
+      </div>
+      <div class="bg-neutral-800 p-4 rounded-xl border border-neutral-700 shadow-lg flex flex-col items-center">
+        <span class="text-neutral-400 text-sm font-medium uppercase tracking-wider">Estudos</span>
+        <span class="text-3xl font-bold text-fuchsia-400">{{ studies.length }}</span>
+      </div>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
       <!-- Devotionals Section -->

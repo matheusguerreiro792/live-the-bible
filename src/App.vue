@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { trackVisit } from './firebase/services/analytics'
+
+onMounted(() => {
+  trackVisit()
+})
 </script>
 
 <template>
